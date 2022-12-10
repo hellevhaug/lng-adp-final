@@ -1,0 +1,42 @@
+1S_23V_45D
+---------------
+Number of loading days: 45
+Total number of arcs: 124672
+Total number of variables: 125369
+Total number of constraints: 20734
+
+1S_23V_60D
+---------------
+Number of loading days: 61
+Total number of arcs: 222315
+Total number of variables: 223619
+Total number of constraints: 27797
+
+1S_23V_75D
+---------------
+Number of loading days: 75
+Total number of arcs: 298415
+Total number of variables: 299793
+Total number of constraints: 28684
+
+1S_23V_90D
+---------------
+Number of loading days: 92
+Total number of arcs: 383310
+Total number of variables: 385186
+Total number of constraints: 32189
+
+1S_23V_120D
+---------------
+Number of loading days: 122
+Total number of arcs: 632399
+Total number of variables: 634814
+Total number of constraints: 40601
+
+1S_23V_180D
+---------------
+Number of loading days: 182
+Total number of arcs: 1057766
+Total number of variables: 1061379
+Total number of constraints: 58940
+

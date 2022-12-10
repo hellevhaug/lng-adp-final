@@ -1,0 +1,649 @@
+{
+"charterVessels": [
+		{
+			"fromDateTime": "2020-01-01T00:00:00",
+			"id": "charter",
+			"name": "Charter in",
+			"loadingRate": 12000,
+			"contractAcceptance":[
+{"contractId":"DESCON_1"}
+],
+"portAcceptance":[
+{"portId": "NGBON"},
+{"portId":"ES"}
+]
+		,
+			"quantity": 145000,
+			"speedProfile": {
+				"fuelProduct": "HFO",
+				"naturalBoilOffFOE": 75,
+				"defaultSpeed": 17.5,
+				"options": [
+				{
+					"fuelConsumption": 0,
+					"speed": 17.5
+				},
+				 {
+					"fuelConsumption": 0,
+					"speed": 19
+				},
+				 {
+					"fuelConsumption": 0,
+					"speed": 16
+				}
+				]
+			},
+			"toDateTime": "2021-02-01T00:00:00",
+			"charterRates": [
+				{
+					"fromDateTime": "2020-01-01T00:00:00",
+					"rate": 150000
+				},
+				{
+					"fromDateTime": "2020-01-15T00:00:00",
+					"rate": 200000
+				}
+			]
+		}
+	],
+"contracts": [
+{"id": "DESCON_1", "name": "DESCON_1", "desRequests": [
+{"id": "100", "name":"DESCON_1-1", "from":"2020-10-01T00:00:00", "to":"2020-10-20T00:00:00", "minQuantity":120000, "quantity":150000, "portId":"ES", "storageId":"Lng-storage"},
+{"id": "101", "name":"DESCON_1-2", "from":"2020-10-10T00:00:00", "to":"2020-11-15T00:00:00", "minQuantity":390000, "quantity":440000, "portId":"ES", "storageId":"Lng-storage"}],
+"salesPrices": [
+	{"fromDateTime": "2020-10-01T00:00:00", "price": 80}
+	]
+},
+{"id": "DESCON_2", "name": "DESCON_2", "desRequests": [
+{"id": "104", "name":"DESCON_2-1", "from":"2020-10-01T00:00:00", "to":"2020-10-30T00:00:00", "minQuantity":120000, "quantity":150000, "portId":"KR", "storageId":"Lng-storage"},
+{"id": "105", "name":"DESCON_2-2", "from":"2020-10-10T00:00:00", "to":"2020-11-30T00:00:00", "minQuantity":250000, "quantity":290000, "portId":"KR", "storageId":"Lng-storage"}],
+"salesPrices": [
+	{"fromDateTime": "2020-10-01T00:00:00", "price": 95}
+	]
+}
+],
+
+
+"forecast": {
+		"fromDateTime": "2020-10-01T00:00:00",
+		"toDateTime": "2020-10-25T00:00:00"
+	},		
+"network": {
+		"legDistances" : [
+
+{"id": "dist_1", "name":"", "fromNode": "NGBON", "toNode": "ES", "distance": 3700},
+{"id": "dist_2", "name":"", "fromNode": "ES", "toNode": "NGBON", "distance": 3700},
+{"id": "dist_3", "name":"", "fromNode": "NGBON", "toNode": "KR", "distance": 10300},
+{"id": "dist_4", "name":"", "fromNode": "KR", "toNode": "NGBON", "distance": 10300},
+{"id": "dist_5", "name":"", "fromNode": "ES", "toNode": "SG", "distance": 11000},
+{"id": "dist_6", "name":"", "fromNode": "KR", "toNode": "SG", "distance": 11000},
+{"id": "dist_7", "name":"", "fromNode": "SG", "toNode": "NGBON", "distance": 8300}
+],
+
+"ports": [
+{"id": "ES", "name": "Spain", "pilotIn": 8, "pilotOut": 8 , "terminal": { "unloadRate":12000}},
+{"id": "SG", "name": "Singapore", "pilotIn": 8, "pilotOut": 8 , "terminal": { "unloadRate":12000}},
+{"id": "KR", "name": "Korea", "pilotIn": 8, "pilotOut": 8 , "terminal": { "unloadRate":12000}},
+			{
+				"export": {
+					"berths": [
+						{
+							"id": "Jetty-2",
+							"name": "Jetty 2"
+						},
+						{
+							"id": "Jetty-1",
+							"name": "Jetty 1"
+						}
+					],
+					"priority": "FIFO",
+					"storages": [
+						{
+							"allowProductionCurtailment": false,
+							"id": "Lng-storage",
+							"inventoryTarget": 0,
+							"defaultLoadingQuantity":150000,
+							"maxLimit": 340000,
+							"maxSafeLimit": 336800,
+							"minLimit": 0,
+							"minSafeLimit": 40000,
+							"name": "LNG Storage",
+							"production": [
+								{"datetime": "2020-10-01T00:00:00",	"rate": 28250}
+								
+							],
+							"tankLevel": [
+								{
+									"datetime": "2020-10-01T00:00:00",
+									"level": 68000
+								}
+							],							
+							"compatibleBerths":[
+							{
+								"berthId": "Jetty-1",
+								"loadRate": 12000,
+								"connection": 5,
+								"disconnection": 3
+							},
+							{
+								"berthId": "Jetty-2",
+								"loadRate": 12000,
+								"connection": 5,
+								"disconnection": 3
+							}
+							]
+						}
+					]
+				},
+				"id": "NGBON",
+				"name": "Bonny Island",
+				"pilotIn": 2.5,
+				"pilotOut": 2.5
+			}
+			]
+	},
+"products": [
+		{
+			"id": "Lng",
+			"name": "LNG"
+		},
+		{
+			"id": "HFO",
+			"name": "HFO",
+			"prices": [
+			{"fromDateTime": "2020-01-01T00:00:00", "price": 350}
+			]
+		}
+	],
+"vessels": [
+{"id": "BAY", "name":"LNG Bayelsa", "from":"2020-09-24T00:00:00", "to":"2040-01-30T00:00:00", "loadRate":12000, "capacity":137036.9, "location":"ES",
+"ladenSpeedProfile": {
+				"fuelProduct": "HFO",
+				"naturalBoilOffFOE": 75,
+				"defaultSpeed": 17,
+				"options": [
+					{
+						"fuelConsumption": 66.3,
+						"speed": 10
+					},
+					{
+						"fuelConsumption": 73.8,
+						"speed": 11
+					},
+					{
+						"fuelConsumption": 82.4,
+						"speed": 12
+					},
+					{
+						"fuelConsumption": 91,
+						"speed": 13
+					},
+					{
+						"fuelConsumption": 101.7,
+						"speed": 14
+					},
+					{
+						"fuelConsumption": 112.4,
+						"speed": 15
+					},
+					{
+						"fuelConsumption": 125.2,
+						"speed": 16
+					},
+					{
+						"fuelConsumption": 139.1,
+						"speed": 17
+					},
+					{
+						"fuelConsumption": 155.2,
+						"speed": 18
+					},
+					{
+						"fuelConsumption": 173.3,
+						"speed": 19
+					}
+				]
+},
+"ballastSpeedProfile": {
+				"fuelProduct": "HFO",
+				"naturalBoilOffFOE": 75,
+				"defaultSpeed": 16,
+				"options": [
+					{
+						"fuelConsumption": 57.8,
+						"speed": 10
+					},
+					{
+						"fuelConsumption": 64.2,
+						"speed": 11
+					},
+					{
+						"fuelConsumption": 72.8,
+						"speed": 12
+					},
+					{
+						"fuelConsumption": 80.3,
+						"speed": 13
+					},
+					{
+						"fuelConsumption": 89.9,
+						"speed": 14
+					},
+					{
+						"fuelConsumption": 99.5,
+						"speed": 15
+					},
+					{
+						"fuelConsumption": 111.3,
+						"speed": 16
+					},
+					{
+						"fuelConsumption": 125.2,
+						"speed": 17
+					},
+					{
+						"fuelConsumption": 139.1,
+						"speed": 18
+					},
+					{
+						"fuelConsumption": 156,
+						"speed": 19
+					}
+				]
+},
+"portAcceptance":[
+{"portId": "NGBON"},
+{"portId":"ES"},
+{"portId":"KR"},
+{"portId":"SG"}
+]
+,
+"maintenances":[
+{"duration": 240, "from": "2020-11-10T00:00:00", "toDateTime": "20201-11-11T00:00:00", "maintenanceId": "BayMaint", "location": "SG"}
+]
+,
+"contractAcceptance":[
+{"contractId":"DESCON_1"},
+{"contractId":"DESCON_2"}
+]},
+{"id": "RIV", "name":"LNG Rivers", "from":"2020-09-29T00:00:00", "to":"2040-01-30T00:00:00", "loadRate":12000, "capacity":137036.9, "location":"ES",
+"ladenSpeedProfile": {
+				"fuelProduct": "HFO",
+				"naturalBoilOffFOE": 75,
+				"defaultSpeed": 16,
+				"options": [
+					{
+						"fuelConsumption": 66.3,
+						"speed": 10
+					},
+					{
+						"fuelConsumption": 73.8,
+						"speed": 11
+					},
+					{
+						"fuelConsumption": 82.4,
+						"speed": 12
+					},
+					{
+						"fuelConsumption": 91,
+						"speed": 13
+					},
+					{
+						"fuelConsumption": 101.7,
+						"speed": 14
+					},
+					{
+						"fuelConsumption": 112.4,
+						"speed": 15
+					},
+					{
+						"fuelConsumption": 125.2,
+						"speed": 16
+					}
+				]
+},
+"ballastSpeedProfile": {
+				"fuelProduct": "HFO",
+				"naturalBoilOffFOE": 75,
+				"defaultSpeed": 16,
+				"options": [
+					{
+						"fuelConsumption": 57.8,
+						"speed": 10
+					},
+					{
+						"fuelConsumption": 64.2,
+						"speed": 11
+					},
+					{
+						"fuelConsumption": 72.8,
+						"speed": 12
+					},
+					{
+						"fuelConsumption": 80.3,
+						"speed": 13
+					},
+					{
+						"fuelConsumption": 89.9,
+						"speed": 14
+					},
+					{
+						"fuelConsumption": 99.5,
+						"speed": 15
+					},
+					{
+						"fuelConsumption": 111.3,
+						"speed": 16
+					}
+				]
+			},
+"portAcceptance":[
+{"portId": "NGBON"},
+{"portId":"ES"},
+{"portId":"KR"},
+{"portId":"SG"}
+]
+,
+"contractAcceptance":[
+{"contractId":"DESCON_1"},
+{"contractId":"DESCON_2"}
+]
+},
+{"id": "SOK", "name":"LNG Sokoto", "from":"2020-10-04T00:00:00", "to":"2040-01-30T00:00:00", "loadRate":12000, "capacity":137100.07, "location":"ES",
+"ladenSpeedProfile": {
+				"fuelProduct": "HFO",
+				"naturalBoilOffFOE": 75,
+				"defaultSpeed": 16,
+				"options": [
+					{
+						"fuelConsumption": 66.3,
+						"speed": 10
+					},
+					{
+						"fuelConsumption": 73.8,
+						"speed": 11
+					},
+					{
+						"fuelConsumption": 82.4,
+						"speed": 12
+					},
+					{
+						"fuelConsumption": 91,
+						"speed": 13
+					},
+					{
+						"fuelConsumption": 101.7,
+						"speed": 14
+					},
+					{
+						"fuelConsumption": 112.4,
+						"speed": 15
+					},
+					{
+						"fuelConsumption": 125.2,
+						"speed": 16
+					}
+				]
+},
+"ballastSpeedProfile": {
+				"fuelProduct": "HFO",
+				"naturalBoilOffFOE": 75,
+				"defaultSpeed": 16,
+				"options": [
+					{
+						"fuelConsumption": 57.8,
+						"speed": 10
+					},
+					{
+						"fuelConsumption": 64.2,
+						"speed": 11
+					},
+					{
+						"fuelConsumption": 72.8,
+						"speed": 12
+					},
+					{
+						"fuelConsumption": 80.3,
+						"speed": 13
+					},
+					{
+						"fuelConsumption": 89.9,
+						"speed": 14
+					},
+					{
+						"fuelConsumption": 99.5,
+						"speed": 15
+					},
+					{
+						"fuelConsumption": 111.3,
+						"speed": 16
+					}
+				]
+			},
+"portAcceptance":[
+{"portId": "NGBON"},
+{"portId":"ES"},
+{"portId":"KR"},
+{"portId":"SG"}
+]
+,
+"contractAcceptance":[
+{"contractId":"DESCON_1"},
+{"contractId":"DESCON_2"}
+]
+},
+{"id": "CRV", "name":"LNG Cross River", "from":"2020-10-09T00:00:00", "to":"2040-01-30T00:00:00", "loadRate":12000, "capacity":141198.55, "location":"ES",
+"ladenSpeedProfile": {
+				"fuelProduct": "HFO",
+				"naturalBoilOffFOE": 75,
+				"defaultSpeed": 16,
+				"options": [
+					{
+						"fuelConsumption": 66.3,
+						"speed": 10
+					},
+					{
+						"fuelConsumption": 73.8,
+						"speed": 11
+					},
+					{
+						"fuelConsumption": 82.4,
+						"speed": 12
+					},
+					{
+						"fuelConsumption": 91,
+						"speed": 13
+					},
+					{
+						"fuelConsumption": 101.7,
+						"speed": 14
+					},
+					{
+						"fuelConsumption": 112.4,
+						"speed": 15
+					},
+					{
+						"fuelConsumption": 125.2,
+						"speed": 16
+					},
+					{
+						"fuelConsumption": 139.1,
+						"speed": 17
+					},
+					{
+						"fuelConsumption": 155.2,
+						"speed": 18
+					},
+					{
+						"fuelConsumption": 173.3,
+						"speed": 19
+					}
+				]
+},
+"ballastSpeedProfile": {
+				"fuelProduct": "HFO",
+				"naturalBoilOffFOE": 75,
+				"defaultSpeed": 16,
+				"options": [
+					{
+						"fuelConsumption": 57.8,
+						"speed": 10
+					},
+					{
+						"fuelConsumption": 64.2,
+						"speed": 11
+					},
+					{
+						"fuelConsumption": 72.8,
+						"speed": 12
+					},
+					{
+						"fuelConsumption": 80.3,
+						"speed": 13
+					},
+					{
+						"fuelConsumption": 89.9,
+						"speed": 14
+					},
+					{
+						"fuelConsumption": 99.5,
+						"speed": 15
+					},
+					{
+						"fuelConsumption": 111.3,
+						"speed": 16
+					},
+					{
+						"fuelConsumption": 125.2,
+						"speed": 17
+					},
+					{
+						"fuelConsumption": 139.1,
+						"speed": 18
+					},
+					{
+						"fuelConsumption": 156,
+						"speed": 19
+					}
+				]
+			},
+"portAcceptance":[
+{"portId": "NGBON"},
+{"portId":"ES"},
+{"portId":"KR"},
+{"portId":"SG"}
+]
+,
+"contractAcceptance":[
+{"contractId":"DESCON_1"},
+{"contractId":"DESCON_2"}
+]
+},
+{"id": "RNI", "name":"LNG River Niger", "from":"2020-10-13T00:00:00", "to":"2040-01-30T00:00:00", "loadRate":12000, "capacity":141198.55, "location":"ES",
+"ladenSpeedProfile": {
+				"fuelProduct": "HFO",
+				"naturalBoilOffFOE": 75,
+				"defaultSpeed": 16,
+				"options": [
+					{
+						"fuelConsumption": 66.3,
+						"speed": 10
+					},
+					{
+						"fuelConsumption": 73.8,
+						"speed": 11
+					},
+					{
+						"fuelConsumption": 82.4,
+						"speed": 12
+					},
+					{
+						"fuelConsumption": 91,
+						"speed": 13
+					},
+					{
+						"fuelConsumption": 101.7,
+						"speed": 14
+					},
+					{
+						"fuelConsumption": 112.4,
+						"speed": 15
+					},
+					{
+						"fuelConsumption": 125.2,
+						"speed": 16
+					},
+					{
+						"fuelConsumption": 139.1,
+						"speed": 17
+					},
+					{
+						"fuelConsumption": 155.2,
+						"speed": 18
+					},
+					{
+						"fuelConsumption": 173.3,
+						"speed": 19
+					}
+				]
+},
+"ballastSpeedProfile": {
+				"fuelProduct": "HFO",
+				"naturalBoilOffFOE": 75,
+				"defaultSpeed": 16,
+				"options": [
+					{
+						"fuelConsumption": 57.8,
+						"speed": 10
+					},
+					{
+						"fuelConsumption": 64.2,
+						"speed": 11
+					},
+					{
+						"fuelConsumption": 72.8,
+						"speed": 12
+					},
+					{
+						"fuelConsumption": 80.3,
+						"speed": 13
+					},
+					{
+						"fuelConsumption": 89.9,
+						"speed": 14
+					},
+					{
+						"fuelConsumption": 99.5,
+						"speed": 15
+					},
+					{
+						"fuelConsumption": 111.3,
+						"speed": 16
+					},
+					{
+						"fuelConsumption": 125.2,
+						"speed": 17
+					},
+					{
+						"fuelConsumption": 139.1,
+						"speed": 18
+					},
+					{
+						"fuelConsumption": 156,
+						"speed": 19
+					}
+				]
+			},
+"portAcceptance":[
+{"portId": "NGBON"},
+{"portId":"ES"},
+{"portId":"KR"},
+{"portId":"SG"}
+]
+,
+"contractAcceptance":[
+{"contractId":"DESCON_1"},
+{"contractId":"DESCON_2"}
+]
+}
+]}

@@ -632,7 +632,7 @@ def run_code(group, filename, waiting_input):
 
 
     # Solve model
-    model.setParam('TimeLimit', 60*40)
+    model.setParam('TimeLimit', 60*10)
     model.setParam('LogFile', f'solution/{group}/{filename}.log')
     model.optimize()
     
@@ -650,7 +650,7 @@ def run_code(group, filename, waiting_input):
     
 
 directory = '1S_23V_120D'
-filename = 't_1S_23V_120D_a'
+filename = 't_1S_23V_120D_b'
 waiting_times = [2,4,6,8,10,12,14,16,18,20]
 
 for waiting_time in waiting_times:

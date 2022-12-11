@@ -8,8 +8,8 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-filename = 't_1S_23V_120D_c'
-group = '1S_23V_120D'
+filename = 't_1S_5V_30D_c'
+group = '1S_5V_30D'
 
 file = open(f'testData/{group}/{filename}.json')
 data = json.load(file)
@@ -159,6 +159,7 @@ if len(des_contract_ids)!=len(set(des_contract_ids)):
 if len(fob_ids)!=len(set(fob_ids)):
     raise ValueError('There is duplicates in long-term FOB contracts, fix data')
 
+last_unloading_day = last_day
 last_day = (last_day-loading_from_time).days
 all_days = [i for i in range(1, last_day+1)]
 
@@ -417,7 +418,7 @@ def get_maintenance_arcs(vessel):
                             arc_waiting_times[m_from_arc] = estimated_waiting
                             arc_saililng_times[m_from_arc] = sailing_waiting_time-estimated_waiting
                             maintenance_arcs.append(m_from_arc)
-                            arc_speeds[m_from_arc] = vessel_min_speed
+                            arc_speeds[m_from_arc] = vessel_min_speed[vessel]
                             sailing_costs[m_from_arc] = (math.floor(distance/(vessel_min_speed[vessel]*24)))*(get_daily_fuel(vessel_min_speed[vessel], vessel, maintenance_vessel_ports[vessel]))*fuel_price
                         maintenance_arcs.append(m_from_arc)
                 
@@ -494,7 +495,7 @@ def find_feasible_arcs(vessel, allowed_waiting):
                                     arc_waiting_times[a] = estimated_waiting
                                     arc_saililng_times[a] = sailing_waiting_time-estimated_waiting
                                     feasible_arcs.append(a)
-                                    arc_speeds[a] = vessel_min_speed
+                                    arc_speeds[a] = vessel_min_speed[vessel]
                                     sailing_costs[a] = (math.floor(distance/(vessel_min_speed[vessel]*24)))*(get_daily_fuel(vessel_min_speed[vessel], vessel, i))*fuel_price
                                     if (exit_arc not in feasible_arcs) and (not loading_port_ids.__contains__(j)):
                                         feasible_arcs.append(exit_arc)

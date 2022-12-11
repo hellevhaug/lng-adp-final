@@ -8,8 +8,8 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-filename = ''
-group = ''
+filename = 't_1S_23V_90D_a'
+group = 'SpeedOpt'
 
 file = open(f'testData/{group}/{filename}.json')
 data = json.load(file)
@@ -651,6 +651,7 @@ model.setParam('LogFile', f'solution/{group}/{filename}.log')
 model.optimize()
 #model.computeIIS()
 #model.write("solution/model.ilp")
+
 
 # Variables saved
 vessel_solution_arcs = {(vessel): [] for vessel in vessel_ids}

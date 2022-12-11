@@ -8,8 +8,8 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-filename = 't_1S_23V_120D_c'
-group = '1S_23V_120D'
+filename = 't_1S_23V_90D_a'
+group = 'SpeedOpt'
 
 file = open(f'testData/{group}/{filename}.json')
 data = json.load(file)

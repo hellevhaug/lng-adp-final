@@ -48,8 +48,8 @@
 	],
 "contracts": [
 {"id": "DESCON_1", "name": "DESCON_1", "desRequests": [
-{"id": "100", "name":"DESCON_1-1", "from":"2020-10-01T00:00:00", "to":"2020-10-23T00:00:00", "minQuantity":120000, "quantity":150000, "portId":"ES", "storageId":"Lng-storage"},
-{"id": "101", "name":"DESCON_1-2", "from":"2020-10-10T00:00:00", "to":"2020-11-10T00:00:00", "minQuantity":370000, "quantity":440000, "portId":"ES", "storageId":"Lng-storage"}],
+{"id": "100", "name":"DESCON_1-1", "from":"2020-10-01T00:00:00", "to":"2020-10-30T00:00:00", "minQuantity":120000, "quantity":150000, "portId":"ES", "storageId":"Lng-storage"},
+{"id": "101", "name":"DESCON_1-2", "from":"2020-10-10T00:00:00", "to":"2020-11-15T00:00:00", "minQuantity":390000, "quantity":440000, "portId":"ES", "storageId":"Lng-storage"}],
 "salesPrices": [
 	{"fromDateTime": "2020-10-01T00:00:00", "price": 80}
 	]

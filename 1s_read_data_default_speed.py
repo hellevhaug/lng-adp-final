@@ -8,8 +8,8 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-filename = 't_1S_23V_90D_a'
-group = 'SpeedOpt'
+filename = 't_1S_23V_120D_c'
+group = '1S_23V_120D'
 
 file = open(f'testData/{group}/{filename}.json')
 data = json.load(file)
@@ -646,8 +646,8 @@ for j in (spot_port_ids+des_contract_ids)), name='charter_upper_capacity')
 
 
 # Solve model
-model.setParam('TimeLimit', 3*60*60)
-model.setParam('LogFile', f'solution/{group}/{filename}.log')
+model.setParam('TimeLimit', 60*60)
+model.setParam('LogFile', f'solution/SpeedOpt/{filename}.log')
 model.optimize()
 #model.computeIIS()
 #model.write("solution/model.ilp")
@@ -683,18 +683,18 @@ for var in model.getVars():
             continue
             
 
-with open(f'solution/{group}/{filename}_x.json', 'w') as f:
+with open(f'solution/SpeedOpt/{filename}_x.json', 'w') as f:
     for vessel in vessel_solution_arcs:
         vessel_solution_arcs[vessel] = sorted(vessel_solution_arcs[vessel], key=itemgetter(0))
     json.dump(vessel_solution_arcs, f)
 
-with open(f'solution/{group}/{filename}_s.json', 'w') as f:
+with open(f'solution/SpeedOpt/{filename}_s.json', 'w') as f:
     json.dump(loading_port_inventory,f)
 
-with open(f'solution/{group}/{filename}_g.json', 'w') as f:
+with open(f'solution/SpeedOpt/{filename}_g.json', 'w') as f:
     json.dump(charter_cargoes, f)
 
-with open(f'solution/{group}/{filename}_z.json', 'w') as f:
+with open(f'solution/SpeedOpt/{filename}_z.json', 'w') as f:
     json.dump(fob_deliveries,f)
             
 for v in model.getVars():

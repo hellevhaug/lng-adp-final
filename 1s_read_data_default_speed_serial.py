@@ -637,7 +637,7 @@ def run_code(group, filename):
 
 
     # Solve model
-    model.setParam('TimeLimit', 3*60*60)
+    model.setParam('TimeLimit', 60*60)
     model.setParam('LogFile', f'solution/{group}/{filename}.log')
     model.optimize()
     #model.computeIIS()
@@ -673,25 +673,25 @@ def run_code(group, filename):
                 continue
                 
 
-    with open(f'solution/{group}/{filename}_x.json', 'w') as f:
+    with open(f'solution/SpeedOpt/{filename}_x.json', 'w') as f:
         for vessel in vessel_solution_arcs:
             vessel_solution_arcs[vessel] = sorted(vessel_solution_arcs[vessel], key=itemgetter(0))
         json.dump(vessel_solution_arcs, f)
 
-    with open(f'solution/{group}/{filename}_s.json', 'w') as f:
+    with open(f'solution/SpeedOpt/{filename}_s.json', 'w') as f:
         json.dump(loading_port_inventory,f)
 
-    with open(f'solution/{group}/{filename}_g.json', 'w') as f:
+    with open(f'solution/SpeedOpt/{filename}_g.json', 'w') as f:
         json.dump(charter_cargoes, f)
 
-    with open(f'solution/{group}/{filename}_z.json', 'w') as f:
+    with open(f'solution/SpeedOpt/{filename}_z.json', 'w') as f:
         json.dump(fob_deliveries,f)
                 
     for v in model.getVars():
         if v.x!=0:
             print(v.varName, v.x)
 
-directory = 'testData/1S_23V_45D'
+directory = 'testData/1S_23V_120D'
 
 for filename in os.listdir(directory):
     f = os.path.join(directory, filename)

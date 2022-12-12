@@ -8,8 +8,8 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-filename = 't_1S_5V_30D_c'
-group = '1S_5V_30D'
+filename = 't_1S_23V_365D_a'
+group = '1S_23V_365D'
 
 file = open(f'testData/{group}/{filename}.json')
 data = json.load(file)
@@ -469,7 +469,7 @@ def find_feasible_arcs(vessel, allowed_waiting):
                     # Cannot travel from unloading to spot or from spot to unloading
                     if (des_contract_ids.__contains__(i or j) and spot_port_ids.__contains__(i or j)):
                         continue
-                    for t_ in range(t+1, len(all_days)):
+                    for t_ in range(t+1, min(t+65,len(all_days))):
                         if loading_port_ids.__contains__(j) and t_>len(loading_days)+1:
                             continue
                         a = (vessel, i, t, j, t_)

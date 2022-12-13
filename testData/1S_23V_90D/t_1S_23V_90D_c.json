@@ -91,7 +91,7 @@
 	{"fromDateTime": "2020-10-01T00:00:00", "price": 82}
 	]},
 {"id": "DESCON_4", "name": "DESCON_4", "desRequests": [
-{"id": "6504", "name":"DESCON_4-1", "from":"2020-09-28T16:00:00","to":"2021-01-15T18:00:00", "minQuantity":1400000, "quantity":158000, "portId":"FR", "storageId":"Lng-storage"}],
+{"id": "6504", "name":"DESCON_4-1", "from":"2020-09-28T16:00:00","to":"2021-01-15T18:00:00", "minQuantity":1400000, "quantity":1580000, "portId":"FR", "storageId":"Lng-storage"}],
 "salesPrices": [
 	{"fromDateTime": "2020-10-01T00:00:00", "price": 75}
 	]},
@@ -110,23 +110,23 @@
 {"id": "FOBCON_1", "name": "FOBCON_1", "fobRequests": [
 {"id": "6514", "name":"FOBCON_1-1", "from": "2020-09-30T04:30:00", "to": "2020-10-15T04:30:00", "minQuantity":174000, "quantity":174000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
 {"id": "6516", "name":"FOBCON_1-2", "from": "2020-10-15T04:30:00", "to": "2020-10-28T04:30:00", "minQuantity":172000, "quantity":172000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
-{"id": "6514", "name":"FOBCON_1-3", "from": "2020-11-01T04:30:00", "to": "2020-11-26T04:30:00", "minQuantity":174000, "quantity":174000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
-{"id": "6516", "name":"FOBCON_1-4", "from": "2020-12-01T04:30:00", "to": "2020-12-28T04:30:00", "minQuantity":138000, "quantity":138000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}]
+{"id": "9514", "name":"FOBCON_1-3", "from": "2020-11-01T04:30:00", "to": "2020-11-26T04:30:00", "minQuantity":174000, "quantity":174000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
+{"id": "9516", "name":"FOBCON_1-4", "from": "2020-12-01T04:30:00", "to": "2020-12-28T04:30:00", "minQuantity":138000, "quantity":138000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}]
 ,
 "salesPrices": [
 	{"fromDateTime": "2020-10-01T00:00:00", "price": 71}
 	]},
 {"id": "FOBCON_3", "name": "FOBCON_3", "fobRequests": [
-{"id": "3514", "name":"FOBCON_3-1", "from": "2020-09-30T04:30:00", "to": "2020-10-15T04:30:00", "minQuantity":136000, "quantity":136000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
+{"id": "3114", "name":"FOBCON_3-1", "from": "2020-09-30T04:30:00", "to": "2020-10-15T04:30:00", "minQuantity":136000, "quantity":136000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
 {"id": "3516", "name":"FOBCON_3-2", "from": "2020-10-15T04:30:00", "to": "2020-10-28T04:30:00", "minQuantity":172000, "quantity":172000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
 {"id": "3514", "name":"FOBCON_3-3", "from": "2020-11-01T04:30:00", "to": "2020-11-26T04:30:00", "minQuantity":174000, "quantity":174000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
-{"id": "3516", "name":"FOBCON_3-4", "from": "2020-12-01T04:30:00", "to": "2020-12-28T04:30:00", "minQuantity":155000, "quantity":155000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
+{"id": "3116", "name":"FOBCON_3-4", "from": "2020-12-01T04:30:00", "to": "2020-12-28T04:30:00", "minQuantity":155000, "quantity":155000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
 "salesPrices": [
 	{"fromDateTime": "2020-10-01T00:00:00", "price": 72}
 	]},
 {"id": "FOBCON_5", "name": "FOBCON_5", "fobRequests": [
 {"id": "6531", "name":"FOBCON_5-1", "from": "2020-10-11T18:30:00", "to": "2020-11-10T18:30:00",  "minQuantity":167000, "quantity":167000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
-{"id": "6531", "name":"FOBCON_5-2", "from": "2020-11-11T18:30:00", "to": "2020-12-01T18:30:00",  "minQuantity":167000, "quantity":167000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
+{"id": "8531", "name":"FOBCON_5-2", "from": "2020-11-11T18:30:00", "to": "2020-12-01T18:30:00",  "minQuantity":167000, "quantity":167000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
 "salesPrices": [
 	{"fromDateTime": "2020-10-01T00:00:00", "price": 60}
 	]},
@@ -136,7 +136,7 @@
 {"id": "6515", "name":"FOBCON_6-3", "from": "2020-10-10T10:30:00", "to": "2020-10-30T10:30:00", "minQuantity":152000, "quantity":152000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
 {"id": "6580", "name":"FOBCON_6-4", "from": "2020-11-05T01:00:00", "to": "2020-11-20T01:00:00", "minQuantity":140000, "quantity":140000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
 {"id": "6581", "name":"FOBCON_6-5", "from": "2020-11-10T10:30:00", "to": "2020-11-30T10:30:00", "minQuantity":152000, "quantity":152000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
-{"id": "6581", "name":"FOBCON_6-6", "from": "2020-12-10T10:30:00", "to": "2020-12-30T10:30:00", "minQuantity":152000, "quantity":152000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
+{"id": "9581", "name":"FOBCON_6-6", "from": "2020-12-10T10:30:00", "to": "2020-12-30T10:30:00", "minQuantity":152000, "quantity":152000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
 "salesPrices": [
 	{"fromDateTime": "2020-10-01T00:00:00", "price": 62}
 	]},
@@ -146,14 +146,14 @@
 {"id": "6582", "name":"FOBCON_7-3", "from": "2020-11-02T01:00:00", "to": "2020-11-15T01:00:00", "minQuantity":152000, "quantity":152000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
 {"id": "6583", "name":"FOBCON_7-4", "from": "2020-11-16T02:00:00", "to": "2020-11-29T02:00:00", "minQuantity":155000, "quantity":155000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
 {"id": "6584", "name":"FOBCON_7-5", "from": "2020-12-01T02:00:00", "to": "2020-12-15T02:00:00", "minQuantity":155000, "quantity":155000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
-{"id": "6584", "name":"FOBCON_7-6", "from": "2020-12-15T02:00:00", "to": "2020-12-30T02:00:00", "minQuantity":155000, "quantity":155000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
+{"id": "8584", "name":"FOBCON_7-6", "from": "2020-12-15T02:00:00", "to": "2020-12-30T02:00:00", "minQuantity":155000, "quantity":155000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
 "salesPrices": [
 	{"fromDateTime": "2020-10-01T00:00:00", "price": 60}
 	]},
 {"id": "FOBCON_9", "name": "FOBCON_9", "fobRequests": [
 {"id": "6534", "name":"FOBCON_9-1", "from": "2020-10-15T21:30:00", "to": "2020-10-30T21:30:00", "minQuantity":152000, "quantity":152000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
-{"id": "6534", "name":"FOBCON_9-2", "from": "2020-11-15T21:30:00", "to": "2020-11-30T21:30:00", "minQuantity":152000, "quantity":152000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
-{"id": "6534", "name":"FOBCON_9-3", "from": "2020-12-15T21:30:00", "to": "2020-12-30T21:30:00", "minQuantity":160000, "quantity":160000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
+{"id": "7534", "name":"FOBCON_9-2", "from": "2020-11-15T21:30:00", "to": "2020-11-30T21:30:00", "minQuantity":152000, "quantity":152000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
+{"id": "3534", "name":"FOBCON_9-3", "from": "2020-12-15T21:30:00", "to": "2020-12-30T21:30:00", "minQuantity":160000, "quantity":160000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
 "salesPrices": [
 	{"fromDateTime": "2020-10-01T00:00:00", "price": 75}
 	]}

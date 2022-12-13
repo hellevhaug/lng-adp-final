@@ -91,7 +91,7 @@
 	{"fromDateTime": "2020-10-01T00:00:00", "price": 82}
 	]},
 {"id": "DESCON_4", "name": "DESCON_4", "desRequests": [
-{"id": "6504", "name":"DESCON_4-1", "from":"2020-09-28T16:00:00","to":"2021-01-15T18:00:00", "minQuantity":1400000, "quantity":158000, "portId":"FR", "storageId":"Lng-storage"}],
+{"id": "6504", "name":"DESCON_4-1", "from":"2020-09-28T16:00:00","to":"2021-01-15T18:00:00", "minQuantity":1400000, "quantity":1580000, "portId":"FR", "storageId":"Lng-storage"}],
 "salesPrices": [
 	{"fromDateTime": "2020-10-01T00:00:00", "price": 75}
 	]},
@@ -126,7 +126,7 @@
 	]},
 {"id": "FOBCON_5", "name": "FOBCON_5", "fobRequests": [
 {"id": "6531", "name":"FOBCON_5-1", "from": "2020-10-11T18:30:00", "to": "2020-11-10T18:30:00",  "minQuantity":167000, "quantity":167000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
-{"id": "6531", "name":"FOBCON_5-2", "from": "2020-11-11T18:30:00", "to": "2020-12-01T18:30:00",  "minQuantity":167000, "quantity":167000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
+{"id": "9531", "name":"FOBCON_5-2", "from": "2020-11-11T18:30:00", "to": "2020-12-01T18:30:00",  "minQuantity":167000, "quantity":167000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
 "salesPrices": [
 	{"fromDateTime": "2020-10-01T00:00:00", "price": 60}
 	]},
@@ -145,7 +145,7 @@
 {"id": "6582", "name":"FOBCON_7-3", "from": "2020-11-02T01:00:00", "to": "2020-11-15T01:00:00", "minQuantity":152000, "quantity":152000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
 {"id": "6583", "name":"FOBCON_7-4", "from": "2020-11-16T02:00:00", "to": "2020-11-29T02:00:00", "minQuantity":155000, "quantity":155000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
 {"id": "6584", "name":"FOBCON_7-5", "from": "2020-12-01T02:00:00", "to": "2020-12-15T02:00:00", "minQuantity":155000, "quantity":155000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0},
-{"id": "6584", "name":"FOBCON_7-6", "from": "2020-12-15T02:00:00", "to": "2020-12-30T02:00:00", "minQuantity":155000, "quantity":155000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
+{"id": "9584", "name":"FOBCON_7-6", "from": "2020-12-15T02:00:00", "to": "2020-12-30T02:00:00", "minQuantity":155000, "quantity":155000, "storageId": "Lng-storage", "cooldownHours":0, "cooldownQuantity": 0, "purgeQuantity": 0}],
 "salesPrices": [
 	{"fromDateTime": "2020-10-01T00:00:00", "price": 60}
 	]},

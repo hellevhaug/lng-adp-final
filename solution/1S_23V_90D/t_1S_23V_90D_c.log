@@ -1,0 +1,78 @@
+
+Gurobi 10.0.0 (win64) logging started Mon Dec 12 20:31:14 2022
+
+Set parameter LogFile to value "solution/1S_23V_90D/t_1S_23V_90D_c.log"
+Gurobi Optimizer version 10.0.0 build v10.0.0rc2 (win64)
+
+CPU model: Intel(R) Core(TM) i7-10700 CPU @ 2.90GHz, instruction set [SSE2|AVX|AVX2]
+Thread count: 8 physical cores, 16 logical processors, using up to 16 threads
+
+Optimize a model with 25882 rows, 200043 columns and 869825 nonzeros
+Model fingerprint: 0xcfdb8a22
+Variable types: 644 continuous, 199399 integer (199399 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 2e+05]
+  Objective range  [4e+01, 2e+07]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 2e+06]
+Presolve removed 15197 rows and 29090 columns
+Presolve time: 1.83s
+Presolved: 10685 rows, 170953 columns, 655970 nonzeros
+Variable types: 656 continuous, 170297 integer (170219 binary)
+Deterministic concurrent LP optimizer: primal simplex, dual simplex, and barrier
+Showing barrier log only...
+
+Root barrier log...
+
+Ordering time: 0.09s
+
+Barrier statistics:
+ AA' NZ     : 3.504e+05
+ Factor NZ  : 6.879e+05 (roughly 80 MB of memory)
+ Factor Ops : 1.403e+08 (less than 1 second per iteration)
+ Threads    : 5
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0  -2.32109870e+15  5.63520406e+13  1.28e+09 6.52e+05  1.22e+11     3s
+   1  -4.73150077e+14  5.42252750e+13  2.64e+08 4.12e+05  2.54e+10     3s
+   2  -4.60676776e+13  4.30654286e+13  2.62e+07 1.63e-09  2.64e+09     3s
+   3  -1.21401654e+12  2.45812227e+13  6.90e+05 2.79e-09  1.33e+08     4s
+   4  -9.86719613e+10  4.73805290e+12  5.61e+04 4.42e-09  1.83e+07     4s
+   5  -3.84784158e+10  3.70878100e+12  2.21e+04 2.56e-09  1.25e+07     4s
+   6  -2.08571932e+10  2.55691836e+12  1.21e+04 1.40e-09  8.38e+06     4s
+   7  -1.67012267e+10  2.30063828e+12  9.79e+03 4.42e-09  7.45e+06     4s
+   8  -8.94790609e+09  1.46833012e+12  5.41e+03 6.29e-09  4.69e+06     4s
+   9  -1.50213644e+09  4.25408061e+11  1.27e+03 1.91e-08  1.32e+06     4s
+
+Barrier performed 9 iterations in 4.19 seconds (4.32 work units)
+Optimization interrupted
+
+
+
+Root relaxation: interrupted, 4692 iterations, 1.85 seconds (0.88 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0          -    0               - 1.2562e+12      -     -    4s
+
+Explored 1 nodes (4692 simplex iterations) in 4.22 seconds (4.30 work units)
+Thread count was 16 (of 16 available processors)
+
+Solution count 0
+
+Solve interrupted
+Best objective -, best bound 1.256161603415e+12, gap -
+IIS computation: initial model status unknown, solving to determine model status
+Presolve removed 14617 rows and 21349 columns
+Presolve time: 0.26s
+
+Explored 0 nodes (0 simplex iterations) in 0.57 seconds (0.49 work units)
+Thread count was 1 (of 16 available processors)
+
+Solution count 0
+
+Solve interrupted
+Best objective -, best bound -, gap -
+IIS runtime: 0.58 seconds (0.49 work units)

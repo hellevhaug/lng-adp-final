@@ -1,0 +1,115 @@
+
+Gurobi 10.0.0 (win64) logging started Mon Dec 12 20:29:58 2022
+
+Set parameter LogFile to value "solution/1S_23V_90D/t_1S_23V_90D_b.log"
+Gurobi Optimizer version 10.0.0 build v10.0.0rc2 (win64)
+
+CPU model: Intel(R) Core(TM) i7-10700 CPU @ 2.90GHz, instruction set [SSE2|AVX|AVX2]
+Thread count: 8 physical cores, 16 logical processors, using up to 16 threads
+
+Optimize a model with 28275 rows, 248551 columns and 1080200 nonzeros
+Model fingerprint: 0xd2aaface
+Variable types: 736 continuous, 247815 integer (247815 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 2e+05]
+  Objective range  [4e+01, 2e+07]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 2e+06]
+Presolve removed 16030 rows and 36198 columns
+Presolve time: 1.97s
+Presolved: 12245 rows, 212353 columns, 807721 nonzeros
+Variable types: 750 continuous, 211603 integer (211603 binary)
+Deterministic concurrent LP optimizer: primal simplex, dual simplex, and barrier
+Showing barrier log only...
+
+Root barrier log...
+
+Ordering time: 0.10s
+
+Barrier statistics:
+ AA' NZ     : 4.353e+05
+ Factor NZ  : 7.089e+05 (roughly 100 MB of memory)
+ Factor Ops : 9.679e+07 (less than 1 second per iteration)
+ Threads    : 5
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0  -3.27357823e+15  5.52169035e+13  1.32e+09 6.32e+05  1.06e+11     4s
+   1  -7.24399431e+14  5.34244912e+13  2.95e+08 4.74e+05  2.39e+10     4s
+   2  -7.13923803e+13  4.20025410e+13  2.97e+07 2.10e-09  2.51e+09     4s
+   3  -5.47596312e+12  2.22990968e+13  2.27e+06 4.66e-09  2.26e+08     4s
+   4  -9.39027738e+11  7.08638046e+12  3.89e+05 3.03e-09  4.44e+07     4s
+   5  -8.68748003e+11  6.79041178e+12  3.60e+05 2.79e-09  4.16e+07     4s
+   6  -6.73899062e+11  4.09304499e+12  2.79e+05 6.05e-09  2.97e+07     4s
+   7  -4.26584565e+11  2.96105840e+12  1.77e+05 1.63e-09  1.98e+07     5s
+   8  -1.30198616e+11  1.92976444e+12  5.41e+04 6.05e-09  8.41e+06     5s
+   9  -7.21391425e+10  1.06976039e+12  3.01e+04 1.40e-08  4.62e+06     5s
+
+Barrier performed 9 iterations in 4.73 seconds (5.01 work units)
+Optimization interrupted
+
+
+
+Root relaxation: interrupted, 0 iterations, 2.07 seconds (1.15 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0          -    0               - 1.5349e+12      -     -    4s
+
+Explored 1 nodes (0 simplex iterations) in 4.77 seconds (5.01 work units)
+Thread count was 16 (of 16 available processors)
+
+Solution count 0
+
+Solve interrupted
+Best objective -, best bound 1.534873353718e+12, gap -
+IIS computation: initial model status unknown, solving to determine model status
+Presolve removed 16070 rows and 37092 columns
+Presolve time: 2.20s
+Presolved: 12205 rows, 211459 columns, 805023 nonzeros
+Variable types: 750 continuous, 210709 integer (210685 binary)
+Deterministic concurrent LP optimizer: primal simplex, dual simplex, and barrier
+Showing barrier log only...
+
+Root barrier log...
+
+Ordering time: 0.13s
+
+Barrier statistics:
+ AA' NZ     : 4.335e+05
+ Factor NZ  : 8.054e+05 (roughly 100 MB of memory)
+ Factor Ops : 1.754e+08 (less than 1 second per iteration)
+ Threads    : 5
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0  -0.00000000e+00  3.60203903e+06  1.32e+09 0.00e+00  6.95e+03     4s
+   1  -0.00000000e+00  3.45507561e+06  1.30e+08 9.71e-17  6.95e+02     4s
+   2  -0.00000000e+00  2.56257700e+06  1.68e+07 1.11e-16  9.41e+01     4s
+   3  -0.00000000e+00  1.30531091e+06  2.50e+06 1.25e-16  1.58e+01     4s
+   4  -0.00000000e+00  1.74089859e+05  1.69e+05 8.03e-17  1.01e+00     5s
+   5  -0.00000000e+00  1.21187011e+05  1.33e+05 6.96e-17  7.49e-01     5s
+
+Barrier performed 5 iterations in 4.77 seconds (5.04 work units)
+Optimization interrupted
+
+
+
+Root relaxation: interrupted, 0 iterations, 1.84 seconds (1.11 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0          -    0               -   -0.00000      -     -    4s
+H    0     0                      -0.0000000   -0.00000  0.00%     -    4s
+
+Explored 1 nodes (6540 simplex iterations) in 4.84 seconds (5.07 work units)
+Thread count was 16 (of 16 available processors)
+
+Solution count 1: -0 
+No other solutions better than -0
+
+Solve interrupted
+Best objective -0.000000000000e+00, best bound -0.000000000000e+00, gap 0.0000%
+IIS runtime: 4.86 seconds (5.07 work units)

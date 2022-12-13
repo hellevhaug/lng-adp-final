@@ -653,7 +653,7 @@ def run_code(group, filename):
         if var.x != 0:
             if var.varName[0]=='x':
                 arc = var.varName[6:-1].split(',')
-                #arc[1], arc[3] = int(arc[1]), int(arc[3])
+                # arc[1], arc[3] = int(arc[1]), int(arc[3])
                 #arc = [arc[i] for i in [1,3,0,2]]
                 vessel_solution_arcs[var.varName[2:5]].append(arc)
             elif var.varName[0]=='s':
@@ -691,7 +691,7 @@ def run_code(group, filename):
         if v.x!=0:
             print(v.varName, v.x)
 
-directory = 'testData/1S_23V_45D'
+directory = 'testData/1S_23V_90D'
 
 for filename in os.listdir(directory):
     f = os.path.join(directory, filename)

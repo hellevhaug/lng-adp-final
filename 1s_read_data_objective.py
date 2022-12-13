@@ -653,33 +653,34 @@ model.optimize()
 # Ledd 7: Transportkostnader for egne vessels
 # Ledd 8: Kostnader av å bruke charter
 
-vessel_solution_arcs = [{(vessel): [] for vessel in vessel_ids}]
-loading_port_inventory = {(loading_port): [] for loading_port in loading_port_ids}  
-charter_cargoes = {(loading_port): [] for loading_port in loading_port_ids}
-fob_deliveries = {}
-fob_deliveries[fob_spot_art_port]=[]
+
+x = {}
+s = {}
+g = {}
+z = {}
+w = {}
+#vessel_solution_arcs = [{(vessel): [] for vessel in vessel_ids}]
+#loading_port_inventory = {(loading_port): [] for loading_port in loading_port_ids}  
+#charter_cargoes = {(loading_port): [] for loading_port in loading_port_ids}
+#fob_deliveries = {}
+#fob_deliveries[fob_spot_art_port]=[]
 for var in model.getVars():
     if var.x != 0:
         if var.varName[0]=='x':
-            arc = var.varName[6:-1].split(',')
-            #arc[1], arc[3] = int(arc[1]), int(arc[3])
-            #arc = [arc[i] for i in [1,3,0,2]]
-            vessel_solution_arcs[var.varName[2:5]].append(arc)
+            v, i, t, j, t_ = var.varName[2:-1].split(',')
+            x[v, i, int(t), j, int(t)]= var.x
         elif var.varName[0]=='s':
-            loading_port, day = var.varName[2:-1].split(',')
-            loading_port_inventory[loading_port].append((int(day),var.x))
+            i, t = var.varName[2:-1].split(',')
+            s[i, int(t)] = var.x
         elif var.varName[0]=='g':
-            day, customer = var.varName[8:-1].split(',')
-            amount = var.x
-            charter_cargoes[var.varName[2:7]].append((int(day), customer, amount))
-        elif var.varName[0]=='z': 
-            customer, day = var.varName[2:-1].split(',')
-            if customer==fob_spot_art_port:
-                fob_deliveries[customer].append((int(day), fob_demands[customer]))
-            else :
-                fob_deliveries[customer]=((int(day), fob_demands[customer]))
-        else: 
-            continue
+            i, t, j = var.varName[2:-1].split(',')
+            g[i, t, j] = var.x
+        elif var.varName[0]=='w': 
+            i, t, j = var.varName[2:-1].split(',')
+            w[i, t, j] = var.x
+        elif var.varName[0]=='z':
+            j, t = var.varName[2:-1].split(',')
+            z[j, t] = var.x
 
 
 

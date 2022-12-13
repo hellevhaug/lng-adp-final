@@ -531,13 +531,14 @@ def run_code(group, filename):
 
 
     # Objective 5.1
-    # Ledd 1: FOB-spot hentet
+    # Ledd 1: FOB hentet (fast + spot)
     # Ledd 2: DES-spot levert med egne vessels
     # Ledd 3: DES-spot levert med charter
     # Ledd 4: Inntekt fra tank left-over value
-    # Ledd 5: Over-delivery-inntekt fra faste kontrakter
-    # Ledd 6: Transportkostnader for egne vessels
-    # Ledd 7: Kostnader av å bruke charter
+    # Ledd 5: Inntekt fra faste kontrakter, egne vessels
+    # Ledd 6: Inntekt fra faste kontrakter, egne vessels
+    # Ledd 7: Transportkostnader for egne vessels
+    # Ledd 8: Kostnader av å bruke charter
 
     model.setObjective(
         (gp.quicksum(fob_revenues[f,t]*fob_demands[f]*z[f,t] 

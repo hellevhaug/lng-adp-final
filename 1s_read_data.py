@@ -8,7 +8,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-filename = 't_1S_23V_90D_c'
+filename = 't_1S_23V_90D_d'
 group = '1S_23V_90D'
 
 file = open(f'testData/{group}/{filename}.json')
@@ -636,11 +636,11 @@ for j in (spot_port_ids+des_contract_ids)), name='charter_upper_capacity')
 
 
 # Solve model
-model.setParam('TimeLimit', 60)
+model.setParam('TimeLimit', 3*60*60)
 model.setParam('LogFile', f'solution/{group}/{filename}.log')
 model.optimize()
-model.computeIIS()
-model.write("solution/model.ilp")
+#model.computeIIS()
+#model.write("solution/model.ilp")
 
 # Variables saved
 vessel_solution_arcs = {(vessel): [] for vessel in vessel_ids}
@@ -652,7 +652,7 @@ for var in model.getVars():
     if var.x != 0:
         if var.varName[0]=='x':
             arc = var.varName[6:-1].split(',')
-            arc[1], arc[3] = int(arc[1]), int(arc[3])
+            #arc[1], arc[3] = int(arc[1]), int(arc[3])
             #arc = [arc[i] for i in [1,3,0,2]]
             vessel_solution_arcs[var.varName[2:5]].append(arc)
         elif var.varName[0]=='s':

@@ -8,8 +8,8 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-filename = 't_1S_23V_120D_a'
-group = '1S_23V_120D'
+filename = 't_1S_23V_90D_c'
+group = '1S_23V_90D'
 
 file = open(f'testData/{group}/{filename}.json')
 data = json.load(file)
@@ -530,7 +530,7 @@ s = model.addVars(production_quantities, vtype='C', name='s')
 
 
 # Objective 5.1
-# Ledd 1: FOB-spot hentet
+# Ledd 1: Total FOB hentet 
 # Ledd 2: DES-spot levert med egne vessels
 # Ledd 3: DES-spot levert med charter
 # Ledd 4: Inntekt fra tank left-over value
@@ -636,114 +636,6 @@ for j in (spot_port_ids+des_contract_ids)), name='charter_upper_capacity')
 
 
 # Solve model
-model.setParam('TimeLimit', 3*60*60)
+model.setParam('TimeLimit', 5)
 model.setParam('LogFile', f'solution/{group}/{filename}.log')
 model.optimize()
-#model.computeIIS()
-#model.write("solution/model.ilp")
-
-# Variables saved
-vessel_solution_arcs = {(vessel): [] for vessel in vessel_ids}
-loading_port_inventory = {(loading_port): [] for loading_port in loading_port_ids}  
-charter_cargoes = {(loading_port): [] for loading_port in loading_port_ids}
-fob_deliveries = {}
-fob_deliveries[fob_spot_art_port]=[]
-for var in model.getVars():
-    if var.x != 0:
-        if var.varName[0]=='x':
-            arc = var.varName[6:-1].split(',')
-            #arc[1], arc[3] = int(arc[1]), int(arc[3])
-            #arc = [arc[i] for i in [1,3,0,2]]
-            vessel_solution_arcs[var.varName[2:5]].append(arc)
-        elif var.varName[0]=='s':
-            loading_port, day = var.varName[2:-1].split(',')
-            loading_port_inventory[loading_port].append((int(day),var.x))
-        elif var.varName[0]=='g':
-            day, customer = var.varName[8:-1].split(',')
-            amount = var.x
-            charter_cargoes[var.varName[2:7]].append((int(day), customer, amount))
-        elif var.varName[0]=='z': 
-            customer, day = var.varName[2:-1].split(',')
-            if customer==fob_spot_art_port:
-                fob_deliveries[customer].append((int(day), fob_demands[customer]))
-            else :
-                fob_deliveries[customer]=((int(day), fob_demands[customer]))
-        else: 
-            continue
-            
-
-with open(f'solution/{group}/{filename}_x.json', 'w') as f:
-    for vessel in vessel_solution_arcs:
-        vessel_solution_arcs[vessel] = sorted(vessel_solution_arcs[vessel], key=itemgetter(0))
-    json.dump(vessel_solution_arcs, f)
-
-with open(f'solution/{group}/{filename}_s.json', 'w') as f:
-    json.dump(loading_port_inventory,f)
-
-with open(f'solution/{group}/{filename}_g.json', 'w') as f:
-    json.dump(charter_cargoes, f)
-
-with open(f'solution/{group}/{filename}_z.json', 'w') as f:
-    json.dump(fob_deliveries,f)
-            
-for v in model.getVars():
-    if v.x!=0:
-        print(v.varName, v.x)
-
-        
-"""
-#PLOTTING 
-
-for v in model.getVars():
-    #print('Var: ', v.x) # v.x is a float
-    #print('Variable Name: ', v.varName) # v.varName is a string
-    # FIKS PLOTT:
-    # MAKING A LIST OUT OF VARIABLE NAME SO WE CAN PLOT:
-    if round(v.x,0) == 1.0:
-        split = v.varName.split(",")
-        split2 = []
-        done_splitting = []
-        for i in split: 
-            p = i.split("[")
-            for e in p: 
-                split2.append(e)
-        for i in split2: 
-            p = i.split("]")
-            for e in p: 
-                done_splitting.append(e)
-        var_type = done_splitting[0]
-        if var_type == 'x':
-            arc_as_list = done_splitting[1:-1]
-            arc_as_float_list = []
-            #print("Arc_as_list: ", arc_as_list)
-            for i in arc_as_list[0:2]:
-                arc_as_float_list.append(i)
-            for i in arc_as_list[2:3]:
-                arc_as_float_list.append(float(i))
-            for i in arc_as_list[3:4]:
-                arc_as_float_list.append(i)
-            for i in arc_as_list[4:]:
-                arc_as_float_list.append(float(i))
-            #print("Arc_as_float_list: ", arc_as_float_list)
-            x_list = [arc_as_float_list[2],arc_as_float_list[4]] #[int(v.varName[4]),int(v.varName[6])]
-            #print(x_list)
-            y_list = [arc_as_float_list[1],arc_as_float_list[3]] #[int(v.varName[3]),int(v.varName[5])]
-            #print(y_list)
-            plt.plot(x_list,y_list, color = "lime", linewidth=1.8)
-color = ["wheat", "skyblue", "darksalmon", "magenta","pink"]
-i = 0
-for vessel in vessel_ids:
-    data = find_feasible_arcs(vessel,allowed_waiting)
-    #print(data)
-    for a in data:
-        x_list = [a[2],a[4]]
-        y_list = [a[1],a[3]]
-        plt.plot(x_list,y_list, color = color[i], linewidth=0.4)
-    if i > 3:
-        i=0
-    else: 
-        i+=1
-plt.xlim([0, (last_unloading_day-loading_from_time).days+1])
-plt.ylim([0, 4])
-plt.show()
-#"""

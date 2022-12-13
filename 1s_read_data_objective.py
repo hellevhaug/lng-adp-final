@@ -534,9 +534,40 @@ s = model.addVars(production_quantities, vtype='C', name='s')
 # Ledd 2: DES-spot levert med egne vessels
 # Ledd 3: DES-spot levert med charter
 # Ledd 4: Inntekt fra tank left-over value
-# Ledd 5: Over-delivery-inntekt fra faste kontrakter
-# Ledd 6: Transportkostnader for egne vessels
-# Ledd 7: Kostnader av å bruke charter
+# Ledd 5: Inntekt fra faste kontrakter, egne vessels
+# Ledd 6: Inntekt fra faste kontrakter, charter
+# Ledd 7: Transportkostnader for egne vessels
+# Ledd 8: Kostnader av å bruke charter
+
+obj_1_fob = gp.quicksum(fob_revenues[f,t]*fob_demands[f]*z[f,t] 
+    for f in fob_ids for t in fob_days[f])
+
+obj_2_des_spot_own = gp.quicksum(des_contract_revenues[j,t_]*vessel_capacities[v]*(1-(t_-t)*vessel_boil_off_rate[v])*x[v,i,t,j,t_] 
+    for v in vessel_ids for i in loading_port_ids for t in loading_days for j in spot_port_ids for t_ in all_days 
+    if (v,i,t,j,t_) in x.keys())
+
+obj_3_des_spot_chart = gp.quicksum(des_contract_revenues[j,min(t+sailing_time_charter[i,j], len(unloading_days[j]))]*g[i,t,j]*
+(1-sailing_time_charter[i,j]*charter_boil_off) for i in loading_port_ids for j in spot_port_ids for t in unloading_days[j])
+
+obj_4_tank_left = gp.quicksum(tank_leftover_value[i]*s[i, len(loading_days)] for i in loading_port_ids)
+
+obj_5_des_long_own = gp.quicksum(vessel_capacities[v]*(1-(t_-t)*vessel_boil_off_rate[v])*des_contract_revenues[j,t_]*x[v,i,t,j,t_]
+    for j in des_contract_ids for v in vessel_ids for i in loading_port_ids for t in vessel_available_days[v] for t_ in unloading_days[j] # Left-hand sums
+    if (v,i,t,j,t_) in x.keys())
+
+obj_6_des_long_chart = gp.quicksum(g[i,t,j]*(1-sailing_time_charter[i,j]*charter_boil_off)*des_contract_revenues[j,t+sailing_time_charter[i,j]] 
+    for j in des_contract_ids for i in loading_port_ids for t in loading_days if (t+sailing_time_charter[i,j]) in unloading_days[j])
+
+obj_7_cost_own_vessels = gp.quicksum(sailing_costs[v,i,t,j,t_]*x[v,i,t,j,t_] for v,i,t,j,t_ in x.keys())
+
+obj_8_cost_charter_vessels = gp.quicksum(charter_total_cost[i,t,j]*w[i,t,j] for i in loading_port_ids for t in loading_days 
+for j in (des_contract_ids+des_spot_ids))
+
+# Objective 5.1
+model.setObjective((obj_1_fob + obj_2_des_spot_own + obj_3_des_spot_chart + obj_4_tank_left + obj_5_des_long_own + obj_6_des_long_chart
++ obj_7_cost_own_vessels + obj_8_cost_charter_vessels), GRB.MAXIMIZE)
+
+"""
 
 model.setObjective(
     (gp.quicksum(fob_revenues[f,t]*fob_demands[f]*z[f,t] 
@@ -556,6 +587,7 @@ model.setObjective(
     gp.quicksum(charter_total_cost[i,t,j]*w[i,t,j] for i in loading_port_ids for t in loading_days for j in (des_contract_ids+des_spot_ids)))
     ,GRB.MAXIMIZE)
 
+"""
 
 # Constraint 5.2
 model.addConstrs(
@@ -634,14 +666,29 @@ for j in (spot_port_ids+des_contract_ids)), name='charter_lower_capacity')
 model.addConstrs((g[i,t,j]<=(charter_vessel_upper_capacity)*w[i,t,j] for i in loading_port_ids for t in loading_days
 for j in (spot_port_ids+des_contract_ids)), name='charter_upper_capacity')
 
+print(obj_6_des_long_chart)
+
+"""
 
 # Solve model
-model.setParam('TimeLimit', 3*60*60)
+model.setParam('TimeLimit', 60)
 model.setParam('LogFile', f'solution/{group}/{filename}.log')
 model.optimize()
 #model.computeIIS()
 #model.write("solution/model.ilp")
 
+# Objective 5.1
+# Ledd 1: FOB-spot hentet
+# Ledd 2: DES-spot levert med egne vessels
+# Ledd 3: DES-spot levert med charter
+# Ledd 4: Inntekt fra tank left-over value
+# Ledd 5: Inntekt fra faste kontrakter, egne vessels
+# Ledd 6: Inntekt fra faste kontrakter, charter
+# Ledd 7: Transportkostnader for egne vessels
+# Ledd 8: Kostnader av å bruke charter
+
+print(f'FOB-spot hentet'{obj_1_fob})
+p
 # Variables saved
 vessel_solution_arcs = {(vessel): [] for vessel in vessel_ids}
 loading_port_inventory = {(loading_port): [] for loading_port in loading_port_ids}  

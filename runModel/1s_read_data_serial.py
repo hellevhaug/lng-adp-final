@@ -9,7 +9,11 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-def run_code(group, filename, waiting_input):
+"""
+This file is for reading data and run the model for 1 loading port and speed optimization, for a configuration
+"""
+
+def run_code(group, filename):
 
     file = open(f'testData/{group}/{filename}.json')
     data = json.load(file)
@@ -270,9 +274,14 @@ def run_code(group, filename, waiting_input):
                             if maintenance_durations[maintenance_id]>(last_unloading_day-maintenance_start_date).days:
                                 maintenance_durations[maintenance_id] =(last_unloading_day-maintenance_start_date).days
                             maintenance_start_times[vessel['id']] = (maintenance_start_date-loading_from_time).days + maintenance_durations[maintenance_id]                   
+
+    for vessel in vessel_ids:
+        print(vessel, vessel_available_days[vessel])
                                                     
     # Now all nodes is defined, should include des contract, des spot, loading and maintenance ports
     node_ids = [node_id for node_id in port_locations]
+
+    print(all_days)
 
     # Charter vessel
     charter_vessel_port_acceptances = {vessel['id']: [] for vessel in data['charterVessels']}
@@ -427,7 +436,7 @@ def run_code(group, filename, waiting_input):
     operational_times = {(v,i,j): set_operational_time(v,i,j) for v,i,j in list(itertools.product(vessel_ids, node_ids, node_ids))}
     charter_boil_off = 0.0012 # Hardkodet 
     tank_leftover_value={'NGBON':40} # Hardkodet
-    allowed_waiting = waiting_input
+    allowed_waiting = 7
     total_feasible_arcs = []
 
     def find_feasible_arcs(vessel, allowed_waiting):
@@ -526,13 +535,14 @@ def run_code(group, filename, waiting_input):
 
 
     # Objective 5.1
-    # Ledd 1: FOB-spot hentet
+    # Ledd 1: FOB hentet (fast + spot)
     # Ledd 2: DES-spot levert med egne vessels
     # Ledd 3: DES-spot levert med charter
     # Ledd 4: Inntekt fra tank left-over value
-    # Ledd 5: Over-delivery-inntekt fra faste kontrakter
-    # Ledd 6: Transportkostnader for egne vessels
-    # Ledd 7: Kostnader av å bruke charter
+    # Ledd 5: Inntekt fra faste kontrakter, egne vessels
+    # Ledd 6: Inntekt fra faste kontrakter, egne vessels
+    # Ledd 7: Transportkostnader for egne vessels
+    # Ledd 8: Kostnader av å bruke charter
 
     model.setObjective(
         (gp.quicksum(fob_revenues[f,t]*fob_demands[f]*z[f,t] 
@@ -632,26 +642,66 @@ def run_code(group, filename, waiting_input):
 
 
     # Solve model
-    model.setParam('TimeLimit', 60*10)
+    model.setParam('TimeLimit', 3*60*60)
     model.setParam('LogFile', f'solution/{group}/{filename}.log')
     model.optimize()
-    
-    with open(f'vars.txt', 'a') as f:
-        f.write(f'Number of waiting days: {waiting_input}\n')
-        f.write('---------------\n')
-        f.write(f'Total number of arcs: {len(total_feasible_arcs)}\n')
-        f.write(f'Variables from best found solution: \n')
-        for v in model.getVars():
-            if v.x!=0:
-                f.write(f'{v.varName}, {v.x}\n')
-        f.write('\n')
-    print(f'Done with allowed waiting days = {waiting_input}')
-             
-    
+    #model.computeIIS()
+    #model.write("solution/model.ilp")
 
-directory = '1S_23V_120D'
-filename = 't_1S_23V_120D_b'
-waiting_times = [2,4,6,8,10,12,14,16,18,20]
+    # Variables saved
+    vessel_solution_arcs = {(vessel): [] for vessel in vessel_ids}
+    loading_port_inventory = {(loading_port): [] for loading_port in loading_port_ids}  
+    charter_cargoes = {(loading_port): [] for loading_port in loading_port_ids}
+    fob_deliveries = {}
+    fob_deliveries[fob_spot_art_port]=[]
+    for var in model.getVars():
+        if var.x != 0:
+            if var.varName[0]=='x':
+                arc = var.varName[6:-1].split(',')
+                # arc[1], arc[3] = int(arc[1]), int(arc[3])
+                #arc = [arc[i] for i in [1,3,0,2]]
+                vessel_solution_arcs[var.varName[2:5]].append(arc)
+            elif var.varName[0]=='s':
+                loading_port, day = var.varName[2:-1].split(',')
+                loading_port_inventory[loading_port].append((int(day),var.x))
+            elif var.varName[0]=='g':
+                day, customer = var.varName[8:-1].split(',')
+                amount = var.x
+                charter_cargoes[var.varName[2:7]].append((int(day), customer, amount))
+            elif var.varName[0]=='z': 
+                customer, day = var.varName[2:-1].split(',')
+                if customer==fob_spot_art_port:
+                    fob_deliveries[customer].append((int(day), fob_demands[customer]))
+                else :
+                    fob_deliveries[customer]=((int(day), fob_demands[customer]))
+            else: 
+                continue
+                
 
-for waiting_time in waiting_times:
-    run_code(directory, filename, waiting_time)
+    with open(f'solution/{group}/{filename}_x.json', 'w') as f:
+        for vessel in vessel_solution_arcs:
+            vessel_solution_arcs[vessel] = sorted(vessel_solution_arcs[vessel], key=itemgetter(0))
+        json.dump(vessel_solution_arcs, f)
+
+    with open(f'solution/{group}/{filename}_s.json', 'w') as f:
+        json.dump(loading_port_inventory,f)
+
+    with open(f'solution/{group}/{filename}_g.json', 'w') as f:
+        json.dump(charter_cargoes, f)
+
+    with open(f'solution/{group}/{filename}_z.json', 'w') as f:
+        json.dump(fob_deliveries,f)
+                
+    for v in model.getVars():
+        if v.x!=0:
+            print(v.varName, v.x)
+
+directory = 'testData/1S_23V_90D'
+
+for filename in os.listdir(directory):
+    f = os.path.join(directory, filename)
+    if os.path.isfile(f):
+        filestring, type = str(filename).split('.')
+        if type=='json':
+            map, directory = directory.split('/')
+            run_code(directory, filestring)

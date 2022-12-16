@@ -4,12 +4,18 @@ from gurobipy import GRB
 import itertools
 import math
 import numpy as np
-import os
 from datetime import datetime
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-def run_code(group, filename):
+"""
+This file is for initialize the model with arc generation without flow constraints
+"""
+
+
+def run_arcs(group):
+    group = group
+    filename = f't_{group}_a'
 
     file = open(f'testData/{group}/{filename}.json')
     data = json.load(file)
@@ -271,13 +277,9 @@ def run_code(group, filename):
                                 maintenance_durations[maintenance_id] =(last_unloading_day-maintenance_start_date).days
                             maintenance_start_times[vessel['id']] = (maintenance_start_date-loading_from_time).days + maintenance_durations[maintenance_id]                   
 
-    for vessel in vessel_ids:
-        print(vessel, vessel_available_days[vessel])
                                                     
     # Now all nodes is defined, should include des contract, des spot, loading and maintenance ports
     node_ids = [node_id for node_id in port_locations]
-
-    print(all_days)
 
     # Charter vessel
     charter_vessel_port_acceptances = {vessel['id']: [] for vessel in data['charterVessels']}
@@ -435,6 +437,8 @@ def run_code(group, filename):
     allowed_waiting = 7
     total_feasible_arcs = []
 
+    print(vessel_start_ports)
+
     def find_feasible_arcs(vessel, allowed_waiting):
         feasible_arcs = []
         # Arc from artificial node
@@ -449,61 +453,53 @@ def run_code(group, filename):
         if maintenance_vessels.__contains__(vessel):
             maintenance_arcs = get_maintenance_arcs(vessel)
             feasible_arcs.extend(maintenance_arcs)
-        port_alternatives = {}
         for t in (vessel_available_days[vessel]+[vessel_available_days[vessel][-1]+1]):
-            port_alternatives[t] = []
-        for t in (vessel_available_days[vessel]+[vessel_available_days[vessel][-1]+1]):
-            if t==vessel_available_days[vessel][0]:
-                port_alternatives[t].append(vessel_start_ports[vessel])
             for i in vessel_port_acceptances[vessel]:
-                if i in port_alternatives[t]:
-                    for j in vessel_port_acceptances[vessel]:
-                        # Cannot travel to node of same type
-                        if port_types[i]==port_types[j]:
+                for j in vessel_port_acceptances[vessel]:
+                    # Cannot travel to node of same type
+                    if port_types[i]==port_types[j]:
+                        continue
+                    # Cannot travel from loading node to maintenance node, feasible the other way
+                    if (loading_port_ids.__contains__(i) and maintenance_ids.__contains__(j)):
+                        continue
+                    # Cannot travel from maintenance node to unloading node
+                    if (maintenance_ids.__contains__(i) and des_contract_ids.__contains__(j)):
+                        continue
+                    # Cannot travel from unloading to spot or from spot to unloading
+                    if (des_contract_ids.__contains__(i or j) and spot_port_ids.__contains__(i or j)):
+                        continue
+                    for t_ in range(t+1, len(all_days)):
+                        if loading_port_ids.__contains__(j) and t_>len(loading_days)+1:
                             continue
-                        # Cannot travel from loading node to maintenance node, feasible the other way
-                        if (loading_port_ids.__contains__(i) and maintenance_ids.__contains__(j)):
-                            continue
-                        # Cannot travel from maintenance node to unloading node
-                        if (maintenance_ids.__contains__(i) and des_contract_ids.__contains__(j)):
-                            continue
-                        # Cannot travel from unloading to spot or from spot to unloading
-                        if (des_contract_ids.__contains__(i or j) and spot_port_ids.__contains__(i or j)):
-                            continue
-                        for t_ in range(t+1, len(all_days)):
-                            if loading_port_ids.__contains__(j) and t_>len(loading_days)+1:
-                                continue
-                            a = (vessel, i, t, j, t_)
-                            distance = distances[port_locations[i],port_locations[j]]
-                            arc_operational_time = operational_times[vessel,i,j]
-                            sailing_waiting_time = t_-t-arc_operational_time
-                            if ((sailing_waiting_time>0) and (distance/(sailing_waiting_time*24) <= vessel_max_speed[vessel])):
-                                estimated_speed = distance/(sailing_waiting_time*24)
-                                exit_arc = (vessel,j,t_,'ART_START',all_days[-1]+1)
-                                if estimated_speed >= vessel_min_speed[vessel]:
-                                    arc_speeds[a] = math.floor(estimated_speed)
-                                    arc_waiting_times[a] = 0
-                                    arc_saililng_times[a] = sailing_waiting_time
-                                    sailing_costs[a] = sailing_waiting_time*(get_daily_fuel(estimated_speed,vessel,i))*fuel_price
+                        a = (vessel, i, t, j, t_)
+                        distance = distances[port_locations[i],port_locations[j]]
+                        arc_operational_time = operational_times[vessel,i,j]
+                        sailing_waiting_time = t_-t-arc_operational_time
+                        if ((sailing_waiting_time>0) and (distance/(sailing_waiting_time*24) <= vessel_max_speed[vessel])):
+                            estimated_speed = distance/(sailing_waiting_time*24)
+                            exit_arc = (vessel,j,t_,'ART_START',all_days[-1]+1)
+                            if estimated_speed >= vessel_min_speed[vessel]:
+                                arc_speeds[a] = math.floor(estimated_speed)
+                                arc_waiting_times[a] = 0
+                                arc_saililng_times[a] = sailing_waiting_time
+                                sailing_costs[a] = sailing_waiting_time*(get_daily_fuel(estimated_speed,vessel,i))*fuel_price
+                                feasible_arcs.append(a)
+                                if (exit_arc not in feasible_arcs) and (not loading_port_ids.__contains__(j)):
+                                    feasible_arcs.append(exit_arc)
+                                    sailing_costs[exit_arc]=0
+                                    arc_saililng_times[exit_arc]=0
+                            else: 
+                                estimated_waiting = sailing_waiting_time-math.floor(distance/(vessel_min_speed[vessel]*24))
+                                if estimated_waiting <= allowed_waiting:
+                                    arc_waiting_times[a] = estimated_waiting
+                                    arc_saililng_times[a] = sailing_waiting_time-estimated_waiting
                                     feasible_arcs.append(a)
+                                    arc_speeds[a] = vessel_min_speed
+                                    sailing_costs[a] = (math.floor(distance/(vessel_min_speed[vessel]*24)))*(get_daily_fuel(vessel_min_speed[vessel], vessel, i))*fuel_price
                                     if (exit_arc not in feasible_arcs) and (not loading_port_ids.__contains__(j)):
                                         feasible_arcs.append(exit_arc)
                                         sailing_costs[exit_arc]=0
                                         arc_saililng_times[exit_arc]=0
-                                else: 
-                                    estimated_waiting = sailing_waiting_time-math.floor(distance/(vessel_min_speed[vessel]*24))
-                                    if estimated_waiting <= allowed_waiting:
-                                        arc_waiting_times[a] = estimated_waiting
-                                        arc_saililng_times[a] = sailing_waiting_time-estimated_waiting
-                                        feasible_arcs.append(a)
-                                        arc_speeds[a] = vessel_min_speed
-                                        sailing_costs[a] = (math.floor(distance/(vessel_min_speed[vessel]*24)))*(get_daily_fuel(vessel_min_speed[vessel], vessel, i))*fuel_price
-                                        if (exit_arc not in feasible_arcs) and (not loading_port_ids.__contains__(j)):
-                                            feasible_arcs.append(exit_arc)
-                                            sailing_costs[exit_arc]=0
-                                            arc_saililng_times[exit_arc]=0
-                                if t_ in loading_days:
-                                    port_alternatives[t_].append(j)
         print(vessel + ' number of arcs:' +str(len(feasible_arcs)))
         total_feasible_arcs.extend(feasible_arcs)
         return feasible_arcs
@@ -531,16 +527,15 @@ def run_code(group, filename):
 
 
     # Objective 5.1
-    # Ledd 1: FOB hentet (fast + spot)
+    # Ledd 1: FOB-spot hentet
     # Ledd 2: DES-spot levert med egne vessels
     # Ledd 3: DES-spot levert med charter
     # Ledd 4: Inntekt fra tank left-over value
-    # Ledd 5: Inntekt fra faste kontrakter, egne vessels
-    # Ledd 6: Inntekt fra faste kontrakter, egne vessels
-    # Ledd 7: Transportkostnader for egne vessels
-    # Ledd 8: Kostnader av å bruke charter
+    # Ledd 5: Over-delivery-inntekt fra faste kontrakter
+    # Ledd 6: Transportkostnader for egne vessels
+    # Ledd 7: Kostnader av å bruke charter
 
-    model.setObjective(
+    a=model.setObjective(
         (gp.quicksum(fob_revenues[f,t]*fob_demands[f]*z[f,t] 
         for f in fob_ids for t in fob_days[f]) + 
         gp.quicksum(des_contract_revenues[j,t_]*vessel_capacities[v]*(1-(t_-t)*vessel_boil_off_rate[v])*x[v,i,t,j,t_] 
@@ -560,7 +555,7 @@ def run_code(group, filename):
 
 
     # Constraint 5.2
-    model.addConstrs(
+    b=model.addConstrs(
         (s[i,t]==initial_inventory[i]+production_quantities[i,t]-gp.quicksum(vessel_capacities[v]*x[v,i,t,j,t_] 
         for v in vessel_ids for j in des_contract_ids for t_ in all_days if (v,i,t,j,t_) in x.keys())
         - gp.quicksum(g[i,t,j] for j in des_contract_ids)
@@ -570,7 +565,7 @@ def run_code(group, filename):
 
 
     # Constraint 5.3
-    model.addConstrs(
+    c=model.addConstrs(
         (s[i,t]==s[i,(t-1)]+production_quantities[i,t]-gp.quicksum(vessel_capacities[v]*x[v,i,t,j,t_] 
         for v in vessel_ids for j in des_contract_ids for t_ in all_days if (v,i,t,j,t_) in x.keys())
         - gp.quicksum(g[i,t,j] for j in des_contract_ids)
@@ -580,29 +575,29 @@ def run_code(group, filename):
 
 
     # Constraint 5.4
-    model.addConstrs((s[i,t] <= max_inventory[i] for i,t in s.keys()),name='upper_inventory')
-    model.addConstrs((min_inventory[i] <= s[i,t] for i,t in s.keys()),name='lower_inventory')
+    d=model.addConstrs((s[i,t] <= max_inventory[i] for i,t in s.keys()),name='upper_inventory')
+    e=model.addConstrs((min_inventory[i] <= s[i,t] for i,t in s.keys()),name='lower_inventory')
 
     # Constraint 5.5
-    model.addConstrs((x.sum(v,'*','*',maintenance_vessel_ports[v],'*') == 1 for v in maintenance_vessels),name='maintenance')
+    p=model.addConstrs((x.sum(v,'*','*',maintenance_vessel_ports[v],'*') == 1 for v in maintenance_vessels),name='maintenance')
 
     # Constraint 5.6
-    model.addConstrs((x.sum(v,'*', [0]+all_days[:t],j,t)== x.sum(v,j,t,'*',all_days[t+1:]+[all_days[-1]+1]) for v in vessel_ids for j in node_ids for t in all_days), name='flow')
+    o=model.addConstrs((x.sum(v,'*', [0]+all_days[:t],j,t)== x.sum(v,j,t,'*',all_days[t+1:]+[all_days[-1]+1]) for v in vessel_ids for j in node_ids for t in all_days), name='flow')
+
+
+    # Constraint 5.61
+    h=model.addConstrs((x[v,'ART_START',0,vessel_start_ports[v],vessel_available_days[v][0]]+x[v,'ART_START',0,'ART_START',all_days[-1]+1]==1 for v in vessel_ids), name='artificial_node')
 
 
     # Constraint 5.7
-    model.addConstrs((x[v,'ART_START',0,vessel_start_ports[v],vessel_available_days[v][0]]+x[v,'ART_START',0,'ART_START',all_days[-1]+1]==1 for v in vessel_ids), name='artificial_node')
-
-
-    # Constraint 5.8
-    a = model.addConstrs((gp.quicksum(vessel_capacities[v]*(1-(t_-t)*vessel_boil_off_rate[v])*x[v,i,t,j,t_]
+    i= model.addConstrs((gp.quicksum(vessel_capacities[v]*(1-(t_-t)*vessel_boil_off_rate[v])*x[v,i,t,j,t_]
         for v in vessel_ids for i in node_ids for t in loading_days for t_ in partition_days[p] # Left-hand sums
         if (v,i,t,j,t_) in x.keys()) +
         gp.quicksum(g[i,t,j]*(1-sailing_time_charter[i,j]*charter_boil_off) 
         for i in loading_port_ids for t in loading_days if t+sailing_time_charter[i,j] in partition_days[p]) # Only if the arc is feasible
         <=upper_partition_demand[j,p] #
         for j in des_contract_ids for p in des_contract_partitions[j]), name='upper_demand')
-    model.addConstrs((
+    j=model.addConstrs((
         lower_partition_demand[j,p]<=(gp.quicksum(vessel_capacities[v]*(1-(t_-t)*vessel_boil_off_rate[v])*x[v,i,t,j,t_]
         for v in vessel_ids for i in node_ids for t in loading_days for t_ in partition_days[p] # Left-hand sums
         if (v,i,t,j,t_) in x.keys())
@@ -611,18 +606,18 @@ def run_code(group, filename):
         for j in des_contract_ids for p in des_contract_partitions[j]), name='lower_demand')
 
 
-    # Constraint 5.9
-    model.addConstrs(
+    # Constraint 5.8
+    k=model.addConstrs(
         (z.sum(f,fob_days[f])==1 for f in fob_contract_ids), name = 'fob_max_contracts')
 
 
-    # Constraint 5.10
-    model.addConstrs((z.sum(f,fob_days[f])<=1 
+    # Constraint 5.9
+    l=model.addConstrs((z.sum(f,fob_days[f])<=1 
     for f in list(set(fob_spot_ids) - set([fob_spot_art_port]))) , name='fob_order')
 
 
     # Constraint 5.11
-    model.addConstrs((gp.quicksum(x[v,i,t,j,tau] for v in vessel_ids for i in node_ids for t in loading_days 
+    m=model.addConstrs((gp.quicksum(x[v,i,t,j,tau] for v in vessel_ids for i in node_ids for t in loading_days 
     for tau in range(t_,t_+operational_times[v,i,j]+1) if (v,i,t,j,tau) in x.keys())
     + gp.quicksum(w[j,t_,j_] for j_ in des_contract_ids)
     + gp.quicksum(z[f_v,j,f_tau] for f_v in fob_ids 
@@ -630,74 +625,23 @@ def run_code(group, filename):
     <=number_of_berths[j] for j in loading_port_ids for t_ in loading_days),name='berth_constraint')
 
 
-    # Constraint 5.12
-    model.addConstrs((charter_vessel_lower_capacity*w[i,t,j]<= g[i,t,j] for i in loading_port_ids for t in loading_days 
+    # Constraint 5.12 
+    n=model.addConstrs((charter_vessel_lower_capacity*w[i,t,j]<= g[i,t,j] for i in loading_port_ids for t in loading_days 
     for j in (spot_port_ids+des_contract_ids)), name='charter_lower_capacity')
     model.addConstrs((g[i,t,j]<=(charter_vessel_upper_capacity)*w[i,t,j] for i in loading_port_ids for t in loading_days
     for j in (spot_port_ids+des_contract_ids)), name='charter_upper_capacity')
 
+    #with open(f'solution/{group}/{filename}_x.json', 'w') as f:
+    with open(f'dumb_arcs.txt', 'a') as f:
+        f.write(f'{group}\n')
+        f.write('---------------\n')
+        f.write(f'Number of loading days: {len(loading_days)}\n')
+        f.write(f'Total number of arcs: {len(total_feasible_arcs)}\n')
+        f.write(f'Total number of variables: {len(x)+len(z)+len(w)+len(g)+len(s)}\n')
+        f.write(f'Total number of constraints: {len(b)+len(c)+len(d)+len(e)+len(p)+len(o)+len(h)+len(i)+len(j)+len(k)+len(l)+len(m)+len(n)}\n')
+        f.write('\n')
 
-    # Solve model
-    model.setParam('TimeLimit', 3*60*60)
-    model.setParam('LogFile', f'solution/{group}/{filename}.log')
-    model.optimize()
-    #model.computeIIS()
-    #model.write("solution/model.ilp")
+groups = ['1S_23V_60D','1S_23V_75D','1S_23V_90D','1S_23V_120D','1S_23V_180D']
 
-    # Variables saved
-    vessel_solution_arcs = {(vessel): [] for vessel in vessel_ids}
-    loading_port_inventory = {(loading_port): [] for loading_port in loading_port_ids}  
-    charter_cargoes = {(loading_port): [] for loading_port in loading_port_ids}
-    fob_deliveries = {}
-    fob_deliveries[fob_spot_art_port]=[]
-    for var in model.getVars():
-        if var.x != 0:
-            if var.varName[0]=='x':
-                arc = var.varName[6:-1].split(',')
-                # arc[1], arc[3] = int(arc[1]), int(arc[3])
-                #arc = [arc[i] for i in [1,3,0,2]]
-                vessel_solution_arcs[var.varName[2:5]].append(arc)
-            elif var.varName[0]=='s':
-                loading_port, day = var.varName[2:-1].split(',')
-                loading_port_inventory[loading_port].append((int(day),var.x))
-            elif var.varName[0]=='g':
-                day, customer = var.varName[8:-1].split(',')
-                amount = var.x
-                charter_cargoes[var.varName[2:7]].append((int(day), customer, amount))
-            elif var.varName[0]=='z': 
-                customer, day = var.varName[2:-1].split(',')
-                if customer==fob_spot_art_port:
-                    fob_deliveries[customer].append((int(day), fob_demands[customer]))
-                else :
-                    fob_deliveries[customer]=((int(day), fob_demands[customer]))
-            else: 
-                continue
-                
-
-    with open(f'solution/{group}/{filename}_x.json', 'w') as f:
-        for vessel in vessel_solution_arcs:
-            vessel_solution_arcs[vessel] = sorted(vessel_solution_arcs[vessel], key=itemgetter(0))
-        json.dump(vessel_solution_arcs, f)
-
-    with open(f'solution/{group}/{filename}_s.json', 'w') as f:
-        json.dump(loading_port_inventory,f)
-
-    with open(f'solution/{group}/{filename}_g.json', 'w') as f:
-        json.dump(charter_cargoes, f)
-
-    with open(f'solution/{group}/{filename}_z.json', 'w') as f:
-        json.dump(fob_deliveries,f)
-                
-    for v in model.getVars():
-        if v.x!=0:
-            print(v.varName, v.x)
-
-directory = 'testData/1S_23V_90D'
-
-for filename in os.listdir(directory):
-    f = os.path.join(directory, filename)
-    if os.path.isfile(f):
-        filestring, type = str(filename).split('.')
-        if type=='json':
-            map, directory = directory.split('/')
-            run_code(directory, filestring)
+for group in groups:
+    run_arcs(group)

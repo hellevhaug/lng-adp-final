@@ -9,6 +9,11 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
+"""
+This file is for reading data and run the model for 2 loading ports and speed optimization,
+for a configuration
+"""
+
 def run_code(group, filename):
 
     file = open(f'testData/{group}/{filename}.json')
@@ -33,7 +38,7 @@ def run_code(group, filename):
         location_names[location['id']] = location['name']
 
     # Loading- and physical locations
-    loading_location_ids = loading_port_ids = ['NGBON']
+    loading_location_ids = loading_port_ids = ['FU','DI']
     unloading_location_ids = [location for location in location_ids if location not in loading_location_ids]
     for u_id in unloading_location_ids:
         location_types[u_id] = 'u'
@@ -44,10 +49,14 @@ def run_code(group, filename):
     max_inventory = {}
     initial_inventory = {}
     number_of_berths = {}
+    production_quantities = {}
+    fake_fob_quantity = {}
+    loading_port_fobs = {}
 
     for location in data['network']['ports']:
         if location['id'] in loading_port_ids:
             location_types[location['id']]='l'
+            loading_port_fobs[location['id']] = []
             port_types[location['id']]='l'
             port_locations[location['id']] = location['id']
             location_ports[location['id']] = location['id']
@@ -56,8 +65,9 @@ def run_code(group, filename):
                 max_inventory[location['id']] = info['maxSafeLimit']
                 initial_inventory[location['id']] = info['tankLevel'][0]['level']
                 number_of_berths[location['id']] = len(info['compatibleBerths'])
-                production_quantities = {(location['id'], day): info['production'][0]['rate'] for day in loading_days} # Pls fix
-                fake_fob_quantity = info['defaultLoadingQuantity']
+                for day in loading_days:
+                    production_quantities[location['id'], day] = info['production'][0]['rate']
+                fake_fob_quantity[location['id']] = info['defaultLoadingQuantity']
 
     # Contracts/partitions
     unloading_port_ids = []
@@ -75,7 +85,7 @@ def run_code(group, filename):
     fob_revenues = {}
     fob_demands = {}
     fob_days = {}
-    fob_loading_port = 'NGBON' # hardkodet, fikser når vi får data
+    fob_loading_port = {}
     unloading_days = {}
     last_day = loading_to_time
 
@@ -133,6 +143,8 @@ def run_code(group, filename):
                 fob_ids.append(partition['id'])
                 fob_contract_ids.append(partition['id'])
                 fob_demands[partition['id']] = partition['quantity']
+                fob_loading_port[partition['id']] = partition['storageId']
+                loading_port_fobs[partition['storageId']].append(partition['id'])
                 partition_from_time = datetime.strptime(partition['from'].split('T')[0], '%Y-%m-%d') # Start time of contract
                 partition_to_time = datetime.strptime(partition['to'].split('T')[0], '%Y-%m-%d') # End time of contract
                 partition_start_time = (partition_from_time-loading_from_time).days
@@ -174,14 +186,18 @@ def run_code(group, filename):
     fob_spot_ids = []
 
     # Hardkoding, fake fob
-    fob_spot_art_port = 'ART_FIC'
-    fob_ids.append(fob_spot_art_port)
-    fob_spot_ids.append(fob_spot_art_port)
-    fob_days[fob_spot_art_port] = loading_days
-    for t in loading_days:
-        fob_demands[fob_spot_art_port] = fake_fob_quantity
-        fob_revenues[fob_spot_art_port,t] = 0
-    port_types[fob_spot_art_port] = 's'
+    fob_spot_art_ports = {}
+    fob_spot_art_ports['FU'] = 'ART_FIC_FU'
+    fob_spot_art_ports['DI'] = 'ART_FIC_DI'
+    for fob_art_spot in fob_spot_art_ports.values():
+        fob_ids.append(fob_art_spot) 
+        fob_spot_ids.append(fob_art_spot)
+    for id in loading_port_ids:
+        fob_days[fob_spot_art_ports[id]] = loading_days
+        port_types[fob_spot_art_ports[id]] = 's'
+        for t in loading_days:
+            fob_demands[fob_spot_art_ports[id]] = fake_fob_quantity[id]
+            fob_revenues[fob_spot_art_ports[id],t] = 0
 
     # Fob operational times
     fob_operational_times = {
@@ -189,7 +205,6 @@ def run_code(group, filename):
 
     # Vessels 
     vessel_ids = []
-    vessel_names = [vessel['id'] for vessel in data['vessels']]
     vessel_available_days = {}
     vessel_capacities = {}
     vessel_start_ports = {}
@@ -205,8 +220,6 @@ def run_code(group, filename):
     maintenance_vessel_ports = {}
     maintenance_durations = {}
     maintenance_start_times = {}
-    maintenance_end_times = {}
-    maintenance_vessel_arcs = {}
 
     for vessel in data['vessels']:
         vessel_ids.append(vessel['id'])
@@ -228,8 +241,8 @@ def run_code(group, filename):
                 vessel_port_acceptances[vessel['id']].append(location_ports[start_location][0])
         for id in loading_port_ids: # Alle båtene er feasible med alle loading_nodes men kan sjekke
             vessel_port_acceptances[vessel['id']].append(id )
-        vessel_min_speed[vessel['id']] = vessel['ladenSpeedProfile']['defaultSpeed']
-        vessel_max_speed[vessel['id']] = vessel['ladenSpeedProfile']['defaultSpeed']
+        vessel_min_speed[vessel['id']] = vessel['ladenSpeedProfile']['options'][0]['speed']
+        vessel_max_speed[vessel['id']] = vessel['ladenSpeedProfile']['options'][-1]['speed']
         vessel_ballast_speed_profile[vessel['id']] = vessel['ballastSpeedProfile']['options']
         vessel_laden_speed_profile[vessel['id']] = vessel['ladenSpeedProfile']['options']
         vessel_boil_off_rate[vessel['id']] = 2*0.0015 #2*vessel['boilOffRate']
@@ -431,7 +444,7 @@ def run_code(group, filename):
     fuel_price = data['products'][1]['prices'][0]['price']
     operational_times = {(v,i,j): set_operational_time(v,i,j) for v,i,j in list(itertools.product(vessel_ids, node_ids, node_ids))}
     charter_boil_off = 0.0012 # Hardkodet 
-    tank_leftover_value={'NGBON':40} # Hardkodet
+    tank_leftover_value={'FU':40, 'DI':40} # Hardkodet
     allowed_waiting = 7
     total_feasible_arcs = []
 
@@ -563,8 +576,8 @@ def run_code(group, filename):
         (s[i,t]==initial_inventory[i]+production_quantities[i,t]-gp.quicksum(vessel_capacities[v]*x[v,i,t,j,t_] 
         for v in vessel_ids for j in des_contract_ids for t_ in all_days if (v,i,t,j,t_) in x.keys())
         - gp.quicksum(g[i,t,j] for j in des_contract_ids)
-        - gp.quicksum(fob_demands[f]*z[f,t] 
-        for f in fob_ids if (f,t) in z.keys())
+        - gp.quicksum(fob_demands[f]*z[f,t]
+        for f in loading_port_fobs[i] if (f,t) in z.keys())
         for i in loading_port_ids for t in loading_days[:1]), name='initital_inventory_control')
 
 
@@ -573,8 +586,8 @@ def run_code(group, filename):
         (s[i,t]==s[i,(t-1)]+production_quantities[i,t]-gp.quicksum(vessel_capacities[v]*x[v,i,t,j,t_] 
         for v in vessel_ids for j in des_contract_ids for t_ in all_days if (v,i,t,j,t_) in x.keys())
         - gp.quicksum(g[i,t,j] for j in des_contract_ids)
-        - gp.quicksum(fob_demands[f]*z[f,t] 
-        for f in (fob_ids) if (f,t) in z.keys())
+        - gp.quicksum(fob_demands[f]*z[f,t]
+        for f in loading_port_fobs[i] if (f,t) in z.keys())
         for i in loading_port_ids for t in loading_days[1:]), name='inventory_control')
 
 
@@ -589,11 +602,11 @@ def run_code(group, filename):
     model.addConstrs((x.sum(v,'*', [0]+all_days[:t],j,t)== x.sum(v,j,t,'*',all_days[t+1:]+[all_days[-1]+1]) for v in vessel_ids for j in node_ids for t in all_days), name='flow')
 
 
-    # Constraint 5.7
+    # Constraint 5.61
     model.addConstrs((x[v,'ART_START',0,vessel_start_ports[v],vessel_available_days[v][0]]+x[v,'ART_START',0,'ART_START',all_days[-1]+1]==1 for v in vessel_ids), name='artificial_node')
 
 
-    # Constraint 5.8
+    # Constraint 5.7
     a = model.addConstrs((gp.quicksum(vessel_capacities[v]*(1-(t_-t)*vessel_boil_off_rate[v])*x[v,i,t,j,t_]
         for v in vessel_ids for i in node_ids for t in loading_days for t_ in partition_days[p] # Left-hand sums
         if (v,i,t,j,t_) in x.keys()) +
@@ -610,26 +623,35 @@ def run_code(group, filename):
         for j in des_contract_ids for p in des_contract_partitions[j]), name='lower_demand')
 
 
-    # Constraint 5.9
+    # Constraint 5.8
     model.addConstrs(
         (z.sum(f,fob_days[f])==1 for f in fob_contract_ids), name = 'fob_max_contracts')
 
 
-    # Constraint 5.10
+    # Constraint 5.9
     model.addConstrs((z.sum(f,fob_days[f])<=1 
-    for f in list(set(fob_spot_ids) - set([fob_spot_art_port]))) , name='fob_order')
+    for f in list(set(fob_spot_ids) - set([fob_spot_art_ports.values()]))) , name='fob_order')
 
+    """
+    # Constraint 5.10
+    a = model.addConstrs((gp.quicksum(vessel_capacities[v]*(1-(t_-t)*vessel_boil_off_rate[v])*x[v,i,t,j,t_]
+        for v in vessel_ids for i in loading_port_ids for t in vessel_available_days[v] for t_ in unloading_days[j] # Left-hand sums
+        if (v,i,t,j,t_) in x.keys()) # Only if the arc is feasible, OBS skal være i unloading_days her
+        +gp.quicksum(g[i,t,j]*(1-sailing_time_charter[i,j]*charter_boil_off) for i in loading_port_ids for t in loading_days)
+        -des_biggest_demand[j]== y[j] # Minus 
+        for j in des_contract_ids), name='defining_y')
 
+    """
     # Constraint 5.11
     model.addConstrs((gp.quicksum(x[v,i,t,j,tau] for v in vessel_ids for i in node_ids for t in loading_days 
     for tau in range(t_,t_+operational_times[v,i,j]+1) if (v,i,t,j,tau) in x.keys())
     + gp.quicksum(w[j,t_,j_] for j_ in des_contract_ids)
-    + gp.quicksum(z[f_v,j,f_tau] for f_v in fob_ids 
+    + gp.quicksum(z[f_v,j,f_tau] for f_v in loading_port_fobs[j] 
     for f_tau in range(t_,t_+fob_operational_times[f_v,j]) if (f_v,j,f_tau) in x.keys())
     <=number_of_berths[j] for j in loading_port_ids for t_ in loading_days),name='berth_constraint')
 
 
-    # Constraint 5.12
+    # Constraint 5.12 
     model.addConstrs((charter_vessel_lower_capacity*w[i,t,j]<= g[i,t,j] for i in loading_port_ids for t in loading_days 
     for j in (spot_port_ids+des_contract_ids)), name='charter_lower_capacity')
     model.addConstrs((g[i,t,j]<=(charter_vessel_upper_capacity)*w[i,t,j] for i in loading_port_ids for t in loading_days
@@ -643,18 +665,23 @@ def run_code(group, filename):
     #model.computeIIS()
     #model.write("solution/model.ilp")
 
+    for v in model.getVars():
+            if v.x!=0:
+                print(v.varName, v.x)
+
     # Variables saved
     vessel_solution_arcs = {(vessel): [] for vessel in vessel_ids}
     loading_port_inventory = {(loading_port): [] for loading_port in loading_port_ids}  
     charter_cargoes = {(loading_port): [] for loading_port in loading_port_ids}
     fob_deliveries = {}
-    fob_deliveries[fob_spot_art_port]=[]
+    for fob_port in fob_spot_art_ports.values():
+        fob_deliveries[fob_port]=[] 
     for var in model.getVars():
         if var.x != 0:
             if var.varName[0]=='x':
                 arc = var.varName[6:-1].split(',')
-                arc[1], arc[3] = int(arc[1]), int(arc[3])
-                arc = [arc[i] for i in [1,3,0,2]]
+                #arc[1], arc[3] = int(arc[1]), int(arc[3])
+                #arc = [arc[i] for i in [1,3,0,2]]
                 vessel_solution_arcs[var.varName[2:5]].append(arc)
             elif var.varName[0]=='s':
                 loading_port, day = var.varName[2:-1].split(',')
@@ -665,7 +692,7 @@ def run_code(group, filename):
                 charter_cargoes[var.varName[2:7]].append((int(day), customer, amount))
             elif var.varName[0]=='z': 
                 customer, day = var.varName[2:-1].split(',')
-                if customer==fob_spot_art_port:
+                if customer in fob_spot_art_ports.values():
                     fob_deliveries[customer].append((int(day), fob_demands[customer]))
                 else :
                     fob_deliveries[customer]=((int(day), fob_demands[customer]))
@@ -673,30 +700,29 @@ def run_code(group, filename):
                 continue
                 
 
-    with open(f'solution/{group}/{filename}_x.json', 'w') as f:
+    with open(f'solution/{filename}_x.json', 'w') as f:
         for vessel in vessel_solution_arcs:
             vessel_solution_arcs[vessel] = sorted(vessel_solution_arcs[vessel], key=itemgetter(0))
         json.dump(vessel_solution_arcs, f)
 
-    with open(f'solution/{group}/{filename}_s.json', 'w') as f:
+    with open(f'solution/{filename}_s.json', 'w') as f:
         json.dump(loading_port_inventory,f)
 
-    with open(f'solution/{group}/{filename}_g.json', 'w') as f:
+    with open(f'solution/{filename}_g.json', 'w') as f:
         json.dump(charter_cargoes, f)
 
-    with open(f'solution/{group}/{filename}_z.json', 'w') as f:
+    with open(f'solution/{filename}_z.json', 'w') as f:
         json.dump(fob_deliveries,f)
                 
     for v in model.getVars():
         if v.x!=0:
             print(v.varName, v.x)
 
-directory = 'testData/1S_23V_45D'
+directory = '2S_15V_60D'
 
 for filename in os.listdir(directory):
     f = os.path.join(directory, filename)
     if os.path.isfile(f):
         filestring, type = str(filename).split('.')
         if type=='json':
-            map, directory = directory.split('/')
             run_code(directory, filestring)

@@ -8,8 +8,13 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-filename = 't_1S_23V_90D_c'
-group = '1S_23V_90D'
+"""
+This file is for reading data and run the model for 2 loading ports and speed optimization, 
+for a test instance
+"""
+
+filename = 't_2S_10V_60D_a'
+group = '2S_15V_60D'
 
 file = open(f'testData/{group}/{filename}.json')
 data = json.load(file)
@@ -33,7 +38,7 @@ for location in data['network']['ports']:
     location_names[location['id']] = location['name']
 
 # Loading- and physical locations
-loading_location_ids = loading_port_ids = ['NGBON']
+loading_location_ids = loading_port_ids = ['FU','DI']
 unloading_location_ids = [location for location in location_ids if location not in loading_location_ids]
 for u_id in unloading_location_ids:
     location_types[u_id] = 'u'
@@ -44,10 +49,14 @@ min_inventory = {}
 max_inventory = {}
 initial_inventory = {}
 number_of_berths = {}
+production_quantities = {}
+fake_fob_quantity = {}
+loading_port_fobs = {}
 
 for location in data['network']['ports']:
     if location['id'] in loading_port_ids:
         location_types[location['id']]='l'
+        loading_port_fobs[location['id']] = []
         port_types[location['id']]='l'
         port_locations[location['id']] = location['id']
         location_ports[location['id']] = location['id']
@@ -56,8 +65,9 @@ for location in data['network']['ports']:
             max_inventory[location['id']] = info['maxSafeLimit']
             initial_inventory[location['id']] = info['tankLevel'][0]['level']
             number_of_berths[location['id']] = len(info['compatibleBerths'])
-            production_quantities = {(location['id'], day): info['production'][0]['rate'] for day in loading_days} # Pls fix
-            fake_fob_quantity = info['defaultLoadingQuantity']
+            for day in loading_days:
+                production_quantities[location['id'], day] = info['production'][0]['rate']
+            fake_fob_quantity[location['id']] = info['defaultLoadingQuantity']
 
 # Contracts/partitions
 unloading_port_ids = []
@@ -75,7 +85,7 @@ fob_contract_ids = []
 fob_revenues = {}
 fob_demands = {}
 fob_days = {}
-fob_loading_port = 'NGBON' # hardkodet, fikser når vi får data
+fob_loading_port = {}
 unloading_days = {}
 last_day = loading_to_time
 
@@ -133,6 +143,8 @@ for contract in data['contracts']:
             fob_ids.append(partition['id'])
             fob_contract_ids.append(partition['id'])
             fob_demands[partition['id']] = partition['quantity']
+            fob_loading_port[partition['id']] = partition['storageId']
+            loading_port_fobs[partition['storageId']].append(partition['id'])
             partition_from_time = datetime.strptime(partition['from'].split('T')[0], '%Y-%m-%d') # Start time of contract
             partition_to_time = datetime.strptime(partition['to'].split('T')[0], '%Y-%m-%d') # End time of contract
             partition_start_time = (partition_from_time-loading_from_time).days
@@ -159,7 +171,6 @@ if len(des_contract_ids)!=len(set(des_contract_ids)):
 if len(fob_ids)!=len(set(fob_ids)):
     raise ValueError('There is duplicates in long-term FOB contracts, fix data')
 
-last_unloading_day = last_day
 last_day = (last_day-loading_from_time).days
 all_days = [i for i in range(1, last_day+1)]
 
@@ -175,14 +186,18 @@ des_spot_ids = []
 fob_spot_ids = []
 
 # Hardkoding, fake fob
-fob_spot_art_port = 'ART_FIC'
-fob_ids.append(fob_spot_art_port)
-fob_spot_ids.append(fob_spot_art_port)
-fob_days[fob_spot_art_port] = loading_days
-for t in loading_days:
-    fob_demands[fob_spot_art_port] = fake_fob_quantity
-    fob_revenues[fob_spot_art_port,t] = 0
-port_types[fob_spot_art_port] = 's'
+fob_spot_art_ports = {}
+fob_spot_art_ports['FU'] = 'ART_FIC_FU'
+fob_spot_art_ports['DI'] = 'ART_FIC_DI'
+for fob_art_spot in fob_spot_art_ports.values():
+    fob_ids.append(fob_art_spot) 
+    fob_spot_ids.append(fob_art_spot)
+for id in loading_port_ids:
+    fob_days[fob_spot_art_ports[id]] = loading_days
+    port_types[fob_spot_art_ports[id]] = 's'
+    for t in loading_days:
+        fob_demands[fob_spot_art_ports[id]] = fake_fob_quantity[id]
+        fob_revenues[fob_spot_art_ports[id],t] = 0
 
 # Fob operational times
 fob_operational_times = {
@@ -271,10 +286,11 @@ for vessel in data['vessels']:
                         if maintenance_durations[maintenance_id]>(last_unloading_day-maintenance_start_date).days:
                             maintenance_durations[maintenance_id] =(last_unloading_day-maintenance_start_date).days
                         maintenance_start_times[vessel['id']] = (maintenance_start_date-loading_from_time).days + maintenance_durations[maintenance_id]                   
-
                                                 
 # Now all nodes is defined, should include des contract, des spot, loading and maintenance ports
 node_ids = [node_id for node_id in port_locations]
+
+print(vessel_port_acceptances)
 
 # Charter vessel
 charter_vessel_port_acceptances = {vessel['id']: [] for vessel in data['charterVessels']}
@@ -418,7 +434,7 @@ def get_maintenance_arcs(vessel):
                             arc_waiting_times[m_from_arc] = estimated_waiting
                             arc_saililng_times[m_from_arc] = sailing_waiting_time-estimated_waiting
                             maintenance_arcs.append(m_from_arc)
-                            arc_speeds[m_from_arc] = vessel_min_speed[vessel]
+                            arc_speeds[m_from_arc] = vessel_min_speed
                             sailing_costs[m_from_arc] = (math.floor(distance/(vessel_min_speed[vessel]*24)))*(get_daily_fuel(vessel_min_speed[vessel], vessel, maintenance_vessel_ports[vessel]))*fuel_price
                         maintenance_arcs.append(m_from_arc)
                 
@@ -428,11 +444,9 @@ def get_maintenance_arcs(vessel):
 fuel_price = data['products'][1]['prices'][0]['price']
 operational_times = {(v,i,j): set_operational_time(v,i,j) for v,i,j in list(itertools.product(vessel_ids, node_ids, node_ids))}
 charter_boil_off = 0.0012 # Hardkodet 
-tank_leftover_value={'NGBON':40} # Hardkodet
+tank_leftover_value={'FU':40, 'DI':40} # Hardkodet
 allowed_waiting = 7
 total_feasible_arcs = []
-
-print(vessel_start_ports)
 
 def find_feasible_arcs(vessel, allowed_waiting):
     feasible_arcs = []
@@ -469,7 +483,7 @@ def find_feasible_arcs(vessel, allowed_waiting):
                     # Cannot travel from unloading to spot or from spot to unloading
                     if (des_contract_ids.__contains__(i or j) and spot_port_ids.__contains__(i or j)):
                         continue
-                    for t_ in range(t+1, min(t+65,len(all_days))):
+                    for t_ in range(t+1, len(all_days)):
                         if loading_port_ids.__contains__(j) and t_>len(loading_days)+1:
                             continue
                         a = (vessel, i, t, j, t_)
@@ -495,7 +509,7 @@ def find_feasible_arcs(vessel, allowed_waiting):
                                     arc_waiting_times[a] = estimated_waiting
                                     arc_saililng_times[a] = sailing_waiting_time-estimated_waiting
                                     feasible_arcs.append(a)
-                                    arc_speeds[a] = vessel_min_speed[vessel]
+                                    arc_speeds[a] = vessel_min_speed
                                     sailing_costs[a] = (math.floor(distance/(vessel_min_speed[vessel]*24)))*(get_daily_fuel(vessel_min_speed[vessel], vessel, i))*fuel_price
                                     if (exit_arc not in feasible_arcs) and (not loading_port_ids.__contains__(j)):
                                         feasible_arcs.append(exit_arc)
@@ -506,6 +520,7 @@ def find_feasible_arcs(vessel, allowed_waiting):
     print(vessel + ' number of arcs:' +str(len(feasible_arcs)))
     total_feasible_arcs.extend(feasible_arcs)
     return feasible_arcs
+
 
 
 vessel_feasible_arcs = {vessel: find_feasible_arcs(vessel, allowed_waiting) for vessel in vessel_ids}
@@ -530,7 +545,7 @@ s = model.addVars(production_quantities, vtype='C', name='s')
 
 
 # Objective 5.1
-# Ledd 1: Total FOB hentet 
+# Ledd 1: FOB-spot hentet
 # Ledd 2: DES-spot levert med egne vessels
 # Ledd 3: DES-spot levert med charter
 # Ledd 4: Inntekt fra tank left-over value
@@ -562,8 +577,8 @@ model.addConstrs(
     (s[i,t]==initial_inventory[i]+production_quantities[i,t]-gp.quicksum(vessel_capacities[v]*x[v,i,t,j,t_] 
     for v in vessel_ids for j in des_contract_ids for t_ in all_days if (v,i,t,j,t_) in x.keys())
     - gp.quicksum(g[i,t,j] for j in des_contract_ids)
-    - gp.quicksum(fob_demands[f]*z[f,t] 
-    for f in fob_ids if (f,t) in z.keys())
+    - gp.quicksum(fob_demands[f]*z[f,t]
+    for f in loading_port_fobs[i] if (f,t) in z.keys())
     for i in loading_port_ids for t in loading_days[:1]), name='initital_inventory_control')
 
 
@@ -572,8 +587,8 @@ model.addConstrs(
     (s[i,t]==s[i,(t-1)]+production_quantities[i,t]-gp.quicksum(vessel_capacities[v]*x[v,i,t,j,t_] 
     for v in vessel_ids for j in des_contract_ids for t_ in all_days if (v,i,t,j,t_) in x.keys())
     - gp.quicksum(g[i,t,j] for j in des_contract_ids)
-    - gp.quicksum(fob_demands[f]*z[f,t] 
-    for f in (fob_ids) if (f,t) in z.keys())
+    - gp.quicksum(fob_demands[f]*z[f,t]
+    for f in loading_port_fobs[i] if (f,t) in z.keys())
     for i in loading_port_ids for t in loading_days[1:]), name='inventory_control')
 
 
@@ -616,14 +631,23 @@ model.addConstrs(
 
 # Constraint 5.9
 model.addConstrs((z.sum(f,fob_days[f])<=1 
-for f in list(set(fob_spot_ids) - set([fob_spot_art_port]))) , name='fob_order')
+for f in list(set(fob_spot_ids) - set([fob_spot_art_ports.values()]))) , name='fob_order')
 
+"""
+# Constraint 5.10
+a = model.addConstrs((gp.quicksum(vessel_capacities[v]*(1-(t_-t)*vessel_boil_off_rate[v])*x[v,i,t,j,t_]
+    for v in vessel_ids for i in loading_port_ids for t in vessel_available_days[v] for t_ in unloading_days[j] # Left-hand sums
+    if (v,i,t,j,t_) in x.keys()) # Only if the arc is feasible, OBS skal være i unloading_days her
+    +gp.quicksum(g[i,t,j]*(1-sailing_time_charter[i,j]*charter_boil_off) for i in loading_port_ids for t in loading_days)
+    -des_biggest_demand[j]== y[j] # Minus 
+    for j in des_contract_ids), name='defining_y')
 
+"""
 # Constraint 5.11
 model.addConstrs((gp.quicksum(x[v,i,t,j,tau] for v in vessel_ids for i in node_ids for t in loading_days 
 for tau in range(t_,t_+operational_times[v,i,j]+1) if (v,i,t,j,tau) in x.keys())
 + gp.quicksum(w[j,t_,j_] for j_ in des_contract_ids)
-+ gp.quicksum(z[f_v,j,f_tau] for f_v in fob_ids 
++ gp.quicksum(z[f_v,j,f_tau] for f_v in loading_port_fobs[j] 
 for f_tau in range(t_,t_+fob_operational_times[f_v,j]) if (f_v,j,f_tau) in x.keys())
 <=number_of_berths[j] for j in loading_port_ids for t_ in loading_days),name='berth_constraint')
 
@@ -636,6 +660,120 @@ for j in (spot_port_ids+des_contract_ids)), name='charter_upper_capacity')
 
 
 # Solve model
-model.setParam('TimeLimit', 5)
+model.setParam('TimeLimit', 3*60*60)
 model.setParam('LogFile', f'solution/{group}/{filename}.log')
 model.optimize()
+#model.computeIIS()
+#model.write("solution/model.ilp")
+
+
+for v in model.getVars():
+        if v.x!=0:
+            print(v.varName, v.x)
+
+# Variables saved
+vessel_solution_arcs = {(vessel): [] for vessel in vessel_ids}
+loading_port_inventory = {(loading_port): [] for loading_port in loading_port_ids}  
+charter_cargoes = {(loading_port): [] for loading_port in loading_port_ids}
+fob_deliveries = {}
+for fob_port in fob_spot_art_ports.values():
+    fob_deliveries[fob_port]=[] 
+for var in model.getVars():
+    if var.x != 0:
+        if var.varName[0]=='x':
+            arc = var.varName[6:-1].split(',')
+            arc[1], arc[3] = int(arc[1]), int(arc[3])
+            arc = [arc[i] for i in [1,3,0,2]]
+            vessel_solution_arcs[var.varName[2:5]].append(arc)
+        elif var.varName[0]=='s':
+            loading_port, day = var.varName[2:-1].split(',')
+            loading_port_inventory[loading_port].append((int(day),var.x))
+        elif var.varName[0]=='g':
+            day, customer = var.varName[8:-1].split(',')
+            amount = var.x
+            charter_cargoes[var.varName[2:7]].append((int(day), customer, amount))
+        elif var.varName[0]=='z': 
+            customer, day = var.varName[2:-1].split(',')
+            if customer in fob_spot_art_ports.values():
+                fob_deliveries[customer].append((int(day), fob_demands[customer]))
+            else :
+                fob_deliveries[customer]=((int(day), fob_demands[customer]))
+        else: 
+            continue
+            
+
+with open(f'solution/{filename}_x.json', 'w') as f:
+    for vessel in vessel_solution_arcs:
+        vessel_solution_arcs[vessel] = sorted(vessel_solution_arcs[vessel], key=itemgetter(0))
+    json.dump(vessel_solution_arcs, f)
+
+with open(f'solution/{filename}_s.json', 'w') as f:
+    json.dump(loading_port_inventory,f)
+
+with open(f'solution/{filename}_g.json', 'w') as f:
+    json.dump(charter_cargoes, f)
+
+with open(f'solution/{filename}_z.json', 'w') as f:
+    json.dump(fob_deliveries,f)
+            
+for v in model.getVars():
+    if v.x!=0:
+        print(v.varName, v.x)
+
+        
+""""
+#PLOTTING 
+
+for v in model.getVars():
+    #print('Var: ', v.x) # v.x is a float
+    #print('Variable Name: ', v.varName) # v.varName is a string
+    # FIKS PLOTT:
+    # MAKING A LIST OUT OF VARIABLE NAME SO WE CAN PLOT:
+    if round(v.x,0) == 1.0:
+        split = v.varName.split(",")
+        split2 = []
+        done_splitting = []
+        for i in split: 
+            p = i.split("[")
+            for e in p: 
+                split2.append(e)
+        for i in split2: 
+            p = i.split("]")
+            for e in p: 
+                done_splitting.append(e)
+        var_type = done_splitting[0]
+        if var_type == 'x':
+            arc_as_list = done_splitting[1:-1]
+            arc_as_float_list = []
+            #print("Arc_as_list: ", arc_as_list)
+            for i in arc_as_list[0:2]:
+                arc_as_float_list.append(i)
+            for i in arc_as_list[2:3]:
+                arc_as_float_list.append(float(i))
+            for i in arc_as_list[3:4]:
+                arc_as_float_list.append(i)
+            for i in arc_as_list[4:]:
+                arc_as_float_list.append(float(i))
+            #print("Arc_as_float_list: ", arc_as_float_list)
+            x_list = [arc_as_float_list[2],arc_as_float_list[4]] #[int(v.varName[4]),int(v.varName[6])]
+            #print(x_list)
+            y_list = [arc_as_float_list[1],arc_as_float_list[3]] #[int(v.varName[3]),int(v.varName[5])]
+            #print(y_list)
+            plt.plot(x_list,y_list, color = "lime", linewidth=1.8)
+color = ["wheat", "skyblue", "darksalmon", "magenta","pink"]
+i = 0
+for vessel in vessel_ids:
+    data = find_feasible_arcs(vessel,allowed_waiting)
+    #print(data)
+    for a in data:
+        x_list = [a[2],a[4]]
+        y_list = [a[1],a[3]]
+        plt.plot(x_list,y_list, color = color[i], linewidth=0.4)
+    if i > 3:
+        i=0
+    else: 
+        i+=1
+plt.xlim([0, (last_unloading_day-loading_from_time).days+1])
+plt.ylim([0, 4])
+plt.show()
+#"""

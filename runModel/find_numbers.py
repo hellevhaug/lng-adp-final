@@ -8,8 +8,12 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-filename = 't_1S_23V_120D_a'
-group = '1S_23V_120D'
+"""
+This file is for reading data only
+"""
+
+filename = 't_1S_23V_60D_a'
+group = '1S_23V_60D'
 
 file = open(f'testData/{group}/{filename}.json')
 data = json.load(file)
@@ -432,7 +436,11 @@ tank_leftover_value={'NGBON':40} # Hardkodet
 allowed_waiting = 7
 total_feasible_arcs = []
 
-print(vessel_start_ports)
+for vessel in vessel_ids:
+    print(vessel)
+    print(vessel_start_ports[vessel])
+    print(vessel_available_days[vessel])
+    print('\n')
 
 def find_feasible_arcs(vessel, allowed_waiting):
     feasible_arcs = []
@@ -509,6 +517,7 @@ def find_feasible_arcs(vessel, allowed_waiting):
 
 
 vessel_feasible_arcs = {vessel: find_feasible_arcs(vessel, allowed_waiting) for vessel in vessel_ids}
+"""
 
 #total_feasible_arcs = list(set(functools.reduce(lambda l1, l2: l1+l2, list(vessel_feasible_arcs.values()))))
 
@@ -530,16 +539,13 @@ s = model.addVars(production_quantities, vtype='C', name='s')
 
 
 # Objective 5.1
-# Ledd 1: FOB-spot hentet
+# Ledd 1: Total FOB hentet 
 # Ledd 2: DES-spot levert med egne vessels
 # Ledd 3: DES-spot levert med charter
 # Ledd 4: Inntekt fra tank left-over value
-# Ledd 5: Inntekt fra faste kontrakter, egne vessels
-# Ledd 6: Inntekt fra faste kontrakter, charter
-# Ledd 7: Transportkostnader for egne vessels
-# Ledd 8: Kostnader av å bruke charter
-
-# Objective 5.1
+# Ledd 5: Over-delivery-inntekt fra faste kontrakter
+# Ledd 6: Transportkostnader for egne vessels
+# Ledd 7: Kostnader av å bruke charter
 
 model.setObjective(
     (gp.quicksum(fob_revenues[f,t]*fob_demands[f]*z[f,t] 
@@ -558,6 +564,7 @@ model.setObjective(
     gp.quicksum(sailing_costs[v,i,t,j,t_]*x[v,i,t,j,t_] for v,i,t,j,t_ in x.keys())-
     gp.quicksum(charter_total_cost[i,t,j]*w[i,t,j] for i in loading_port_ids for t in loading_days for j in (des_contract_ids+des_spot_ids)))
     ,GRB.MAXIMIZE)
+
 
 # Constraint 5.2
 model.addConstrs(
@@ -636,191 +643,10 @@ for j in (spot_port_ids+des_contract_ids)), name='charter_lower_capacity')
 model.addConstrs((g[i,t,j]<=(charter_vessel_upper_capacity)*w[i,t,j] for i in loading_port_ids for t in loading_days
 for j in (spot_port_ids+des_contract_ids)), name='charter_upper_capacity')
 
+
 # Solve model
-model.setParam('TimeLimit', 120)
+model.setParam('TimeLimit', 5)
 model.setParam('LogFile', f'solution/{group}/{filename}.log')
 model.optimize()
-#model.computeIIS()
-#model.write("solution/model.ilp")
-
-# Objective 5.1
-# Ledd 1: FOB-spot hentet
-# Ledd 2: DES-spot levert med egne vessels
-# Ledd 3: DES-spot levert med charter
-# Ledd 4: Inntekt fra tank left-over value
-# Ledd 5: Inntekt fra faste kontrakter, egne vessels
-# Ledd 6: Inntekt fra faste kontrakter, charter
-# Ledd 7: Transportkostnader for egne vessels
-# Ledd 8: Kostnader av å bruke charter
-
-
-x = {}
-s = {}
-g = {}
-z = {}
-w = {}
-#vessel_solution_arcs = [{(vessel): [] for vessel in vessel_ids}]
-#loading_port_inventory = {(loading_port): [] for loading_port in loading_port_ids}  
-#charter_cargoes = {(loading_port): [] for loading_port in loading_port_ids}
-#fob_deliveries = {}
-#fob_deliveries[fob_spot_art_port]=[]
-for var in model.getVars():
-    if var.x != 0:
-        if var.varName[0]=='x':
-            v, i, t, j, t_ = var.varName[2:-1].split(',')
-            x[v, i, int(t), j, int(t)]= var.x
-        elif var.varName[0]=='s':
-            i, t = var.varName[2:-1].split(',')
-            s[i, int(t)] = var.x
-        elif var.varName[0]=='g':
-            i, t, j = var.varName[2:-1].split(',')
-            g[i, t, j] = var.x
-        elif var.varName[0]=='w': 
-            i, t, j = var.varName[2:-1].split(',')
-            w[i, t, j] = var.x
-        elif var.varName[0]=='z':
-            j, t = var.varName[2:-1].split(',')
-            z[j, t] = var.x
-
-
-
-obj_1_fob = gp.quicksum(fob_revenues[f,t]*fob_demands[f]*z[f,t] 
-    for f in fob_ids for t in fob_days[f])
-
-obj_2_des_spot_own = gp.quicksum(des_contract_revenues[j,t_]*vessel_capacities[v]*(1-(t_-t)*vessel_boil_off_rate[v])*x[v,i,t,j,t_] 
-    for v in vessel_ids for i in loading_port_ids for t in loading_days for j in spot_port_ids for t_ in all_days 
-    if (v,i,t,j,t_) in x.keys())
-
-obj_3_des_spot_chart = gp.quicksum(des_contract_revenues[j,min(t+sailing_time_charter[i,j], len(unloading_days[j]))]*g[i,t,j]*
-(1-sailing_time_charter[i,j]*charter_boil_off) for i in loading_port_ids for j in spot_port_ids for t in unloading_days[j])
-
-obj_4_tank_left = gp.quicksum(tank_leftover_value[i]*s[i, len(loading_days)] for i in loading_port_ids)
-
-obj_5_des_long_own = gp.quicksum(vessel_capacities[v]*(1-(t_-t)*vessel_boil_off_rate[v])*des_contract_revenues[j,t_]*x[v,i,t,j,t_]
-    for j in des_contract_ids for v in vessel_ids for i in loading_port_ids for t in vessel_available_days[v] for t_ in unloading_days[j] # Left-hand sums
-    if (v,i,t,j,t_) in x.keys())
-
-obj_6_des_long_chart = gp.quicksum(g[i,t,j]*(1-sailing_time_charter[i,j]*charter_boil_off)*des_contract_revenues[j,t+sailing_time_charter[i,j]] 
-    for j in des_contract_ids for i in loading_port_ids for t in loading_days if (t+sailing_time_charter[i,j]) in unloading_days[j])
-
-obj_7_cost_own_vessels = gp.quicksum(sailing_costs[v,i,t,j,t_]*x[v,i,t,j,t_] for v,i,t,j,t_ in x.keys())
-
-obj_8_cost_charter_vessels = gp.quicksum(charter_total_cost[i,t,j]*w[i,t,j] for i in loading_port_ids for t in loading_days 
-for j in (des_contract_ids+des_spot_ids))
-
-
-print(f'FOB-spot hentet: {obj_1_fob}')
-print(f'DES-spot levert med egne vessels: {obj_2_des_spot_own}')
-print(f'DES-spot levert med charter: {obj_3_des_spot_chart}')
-print(f'Inntekt fra tank left-over value: {obj_4_tank_left}')
-print(f'Inntekt fra faste kontrakter, egne vessels: {obj_5_des_long_own}')
-print(f'Inntekt fra faste kontrakter, charter: {obj_6_des_long_chart}')
-print(f'Transportkostnader for egne vessels: {obj_7_cost_own_vessels}')
-print(f'Kostnader av å bruke charter: {obj_8_cost_charter_vessels}')
 
 """
-
-# Variables saved
-vessel_solution_arcs = {(vessel): [] for vessel in vessel_ids}
-loading_port_inventory = {(loading_port): [] for loading_port in loading_port_ids}  
-charter_cargoes = {(loading_port): [] for loading_port in loading_port_ids}
-fob_deliveries = {}
-fob_deliveries[fob_spot_art_port]=[]
-for var in model.getVars():
-    if var.x != 0:
-        if var.varName[0]=='x':
-            arc = var.varName[6:-1].split(',')
-            #arc[1], arc[3] = int(arc[1]), int(arc[3])
-            #arc = [arc[i] for i in [1,3,0,2]]
-            vessel_solution_arcs[var.varName[2:5]].append(arc)
-        elif var.varName[0]=='s':
-            loading_port, day = var.varName[2:-1].split(',')
-            loading_port_inventory[loading_port].append((int(day),var.x))
-        elif var.varName[0]=='g':
-            day, customer = var.varName[8:-1].split(',')
-            amount = var.x
-            charter_cargoes[var.varName[2:7]].append((int(day), customer, amount))
-        elif var.varName[0]=='z': 
-            customer, day = var.varName[2:-1].split(',')
-            if customer==fob_spot_art_port:
-                fob_deliveries[customer].append((int(day), fob_demands[customer]))
-            else :
-                fob_deliveries[customer]=((int(day), fob_demands[customer]))
-        else: 
-            continue
-            
-
-with open(f'solution/{group}/{filename}_x.json', 'w') as f:
-    for vessel in vessel_solution_arcs:
-        vessel_solution_arcs[vessel] = sorted(vessel_solution_arcs[vessel], key=itemgetter(0))
-    json.dump(vessel_solution_arcs, f)
-
-with open(f'solution/{group}/{filename}_s.json', 'w') as f:
-    json.dump(loading_port_inventory,f)
-
-with open(f'solution/{group}/{filename}_g.json', 'w') as f:
-    json.dump(charter_cargoes, f)
-
-with open(f'solution/{group}/{filename}_z.json', 'w') as f:
-    json.dump(fob_deliveries,f)
-            
-for v in model.getVars():
-    if v.x!=0:
-        print(v.varName, v.x)
-
-        
-#PLOTTING 
-
-for v in model.getVars():
-    #print('Var: ', v.x) # v.x is a float
-    #print('Variable Name: ', v.varName) # v.varName is a string
-    # FIKS PLOTT:
-    # MAKING A LIST OUT OF VARIABLE NAME SO WE CAN PLOT:
-    if round(v.x,0) == 1.0:
-        split = v.varName.split(",")
-        split2 = []
-        done_splitting = []
-        for i in split: 
-            p = i.split("[")
-            for e in p: 
-                split2.append(e)
-        for i in split2: 
-            p = i.split("]")
-            for e in p: 
-                done_splitting.append(e)
-        var_type = done_splitting[0]
-        if var_type == 'x':
-            arc_as_list = done_splitting[1:-1]
-            arc_as_float_list = []
-            #print("Arc_as_list: ", arc_as_list)
-            for i in arc_as_list[0:2]:
-                arc_as_float_list.append(i)
-            for i in arc_as_list[2:3]:
-                arc_as_float_list.append(float(i))
-            for i in arc_as_list[3:4]:
-                arc_as_float_list.append(i)
-            for i in arc_as_list[4:]:
-                arc_as_float_list.append(float(i))
-            #print("Arc_as_float_list: ", arc_as_float_list)
-            x_list = [arc_as_float_list[2],arc_as_float_list[4]] #[int(v.varName[4]),int(v.varName[6])]
-            #print(x_list)
-            y_list = [arc_as_float_list[1],arc_as_float_list[3]] #[int(v.varName[3]),int(v.varName[5])]
-            #print(y_list)
-            plt.plot(x_list,y_list, color = "lime", linewidth=1.8)
-color = ["wheat", "skyblue", "darksalmon", "magenta","pink"]
-i = 0
-for vessel in vessel_ids:
-    data = find_feasible_arcs(vessel,allowed_waiting)
-    #print(data)
-    for a in data:
-        x_list = [a[2],a[4]]
-        y_list = [a[1],a[3]]
-        plt.plot(x_list,y_list, color = color[i], linewidth=0.4)
-    if i > 3:
-        i=0
-    else: 
-        i+=1
-plt.xlim([0, (last_unloading_day-loading_from_time).days+1])
-plt.ylim([0, 4])
-plt.show()
-#"""

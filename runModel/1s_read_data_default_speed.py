@@ -8,8 +8,14 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
-filename = 't_1S_23V_120D_a'
-group = '1S_23V_120D'
+"""
+This file is for reading data and run the model for 1 loading port, default speed,
+for a test instance
+"""
+
+
+filename = ''
+group = ''
 
 file = open(f'testData/{group}/{filename}.json')
 data = json.load(file)
@@ -159,7 +165,6 @@ if len(des_contract_ids)!=len(set(des_contract_ids)):
 if len(fob_ids)!=len(set(fob_ids)):
     raise ValueError('There is duplicates in long-term FOB contracts, fix data')
 
-last_unloading_day = last_day
 last_day = (last_day-loading_from_time).days
 all_days = [i for i in range(1, last_day+1)]
 
@@ -229,8 +234,8 @@ for vessel in data['vessels']:
             vessel_port_acceptances[vessel['id']].append(location_ports[start_location][0])
     for id in loading_port_ids: # Alle båtene er feasible med alle loading_nodes men kan sjekke
         vessel_port_acceptances[vessel['id']].append(id )
-    vessel_min_speed[vessel['id']] = vessel['ladenSpeedProfile']['options'][0]['speed']
-    vessel_max_speed[vessel['id']] = vessel['ladenSpeedProfile']['options'][-1]['speed']
+    vessel_min_speed[vessel['id']] = vessel['ladenSpeedProfile']['defaultSpeed']
+    vessel_max_speed[vessel['id']] = vessel['ladenSpeedProfile']['defaultSpeed']
     vessel_ballast_speed_profile[vessel['id']] = vessel['ballastSpeedProfile']['options']
     vessel_laden_speed_profile[vessel['id']] = vessel['ladenSpeedProfile']['options']
     vessel_boil_off_rate[vessel['id']] = 2*0.0015 #2*vessel['boilOffRate']
@@ -272,9 +277,13 @@ for vessel in data['vessels']:
                             maintenance_durations[maintenance_id] =(last_unloading_day-maintenance_start_date).days
                         maintenance_start_times[vessel['id']] = (maintenance_start_date-loading_from_time).days + maintenance_durations[maintenance_id]                   
 
+for vessel in vessel_ids:
+    print(vessel, vessel_available_days[vessel])
                                                 
 # Now all nodes is defined, should include des contract, des spot, loading and maintenance ports
 node_ids = [node_id for node_id in port_locations]
+
+print(all_days)
 
 # Charter vessel
 charter_vessel_port_acceptances = {vessel['id']: [] for vessel in data['charterVessels']}
@@ -418,7 +427,7 @@ def get_maintenance_arcs(vessel):
                             arc_waiting_times[m_from_arc] = estimated_waiting
                             arc_saililng_times[m_from_arc] = sailing_waiting_time-estimated_waiting
                             maintenance_arcs.append(m_from_arc)
-                            arc_speeds[m_from_arc] = vessel_min_speed[vessel]
+                            arc_speeds[m_from_arc] = vessel_min_speed
                             sailing_costs[m_from_arc] = (math.floor(distance/(vessel_min_speed[vessel]*24)))*(get_daily_fuel(vessel_min_speed[vessel], vessel, maintenance_vessel_ports[vessel]))*fuel_price
                         maintenance_arcs.append(m_from_arc)
                 
@@ -431,8 +440,6 @@ charter_boil_off = 0.0012 # Hardkodet
 tank_leftover_value={'NGBON':40} # Hardkodet
 allowed_waiting = 7
 total_feasible_arcs = []
-
-print(vessel_start_ports)
 
 def find_feasible_arcs(vessel, allowed_waiting):
     feasible_arcs = []
@@ -469,7 +476,7 @@ def find_feasible_arcs(vessel, allowed_waiting):
                     # Cannot travel from unloading to spot or from spot to unloading
                     if (des_contract_ids.__contains__(i or j) and spot_port_ids.__contains__(i or j)):
                         continue
-                    for t_ in range(t+1, min(t+65,len(all_days))):
+                    for t_ in range(t+1, len(all_days)):
                         if loading_port_ids.__contains__(j) and t_>len(loading_days)+1:
                             continue
                         a = (vessel, i, t, j, t_)
@@ -495,7 +502,7 @@ def find_feasible_arcs(vessel, allowed_waiting):
                                     arc_waiting_times[a] = estimated_waiting
                                     arc_saililng_times[a] = sailing_waiting_time-estimated_waiting
                                     feasible_arcs.append(a)
-                                    arc_speeds[a] = vessel_min_speed[vessel]
+                                    arc_speeds[a] = vessel_min_speed
                                     sailing_costs[a] = (math.floor(distance/(vessel_min_speed[vessel]*24)))*(get_daily_fuel(vessel_min_speed[vessel], vessel, i))*fuel_price
                                     if (exit_arc not in feasible_arcs) and (not loading_port_ids.__contains__(j)):
                                         feasible_arcs.append(exit_arc)
@@ -618,7 +625,16 @@ model.addConstrs(
 model.addConstrs((z.sum(f,fob_days[f])<=1 
 for f in list(set(fob_spot_ids) - set([fob_spot_art_port]))) , name='fob_order')
 
+"""
+# Constraint 5.10
+a = model.addConstrs((gp.quicksum(vessel_capacities[v]*(1-(t_-t)*vessel_boil_off_rate[v])*x[v,i,t,j,t_]
+    for v in vessel_ids for i in loading_port_ids for t in vessel_available_days[v] for t_ in unloading_days[j] # Left-hand sums
+    if (v,i,t,j,t_) in x.keys()) # Only if the arc is feasible, OBS skal være i unloading_days her
+    +gp.quicksum(g[i,t,j]*(1-sailing_time_charter[i,j]*charter_boil_off) for i in loading_port_ids for t in loading_days)
+    -des_biggest_demand[j]== y[j] # Minus 
+    for j in des_contract_ids), name='defining_y')
 
+"""
 # Constraint 5.11
 model.addConstrs((gp.quicksum(x[v,i,t,j,tau] for v in vessel_ids for i in node_ids for t in loading_days 
 for tau in range(t_,t_+operational_times[v,i,j]+1) if (v,i,t,j,tau) in x.keys())
@@ -652,8 +668,8 @@ for var in model.getVars():
     if var.x != 0:
         if var.varName[0]=='x':
             arc = var.varName[6:-1].split(',')
-            #arc[1], arc[3] = int(arc[1]), int(arc[3])
-            #arc = [arc[i] for i in [1,3,0,2]]
+            arc[1], arc[3] = int(arc[1]), int(arc[3])
+            arc = [arc[i] for i in [1,3,0,2]]
             vessel_solution_arcs[var.varName[2:5]].append(arc)
         elif var.varName[0]=='s':
             loading_port, day = var.varName[2:-1].split(',')

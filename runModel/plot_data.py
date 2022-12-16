@@ -1,5 +1,10 @@
 import json
 
+"""
+This file is for printing out the saved optimal values
+"""
+
+
 file1 = open('solution/x.json')
 data1 = json.load(file1)
 

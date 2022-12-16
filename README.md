@@ -18,3 +18,5 @@ Repository for TIØ4500 Project Thesis, at Norwegian University of Technology a
 
 ----------------------------------------------------------------------------------------
 By Sanna Baug Warholm, Sigrid Hallem Solum and Helle Villmones Haug 
+
+Feel free to contact us on hellevha@stud.ntnu.no if you have any questions.
